@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Book a Shoot | LF Property Media — Sarasota, FL</title>
+<meta name="description" content="Book a real estate or automotive photography session with LF Property Media in Sarasota, FL. Free consultation and 24-hour quote." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="css/styles.css?v=1" />
+<link rel="icon" type="image/svg+xml" href="images/favicon.svg" />
+<meta property="og:title" content="Book a Shoot | LF Property Media" />
+<meta property="og:description" content="Book real estate or automotive photography in Sarasota, FL." />
+</head>
+<body>
+
+<a class="skip-link" href="#main">Skip to content</a>
+
+<div class="topbar">
+  <div class="container">
+    <span>Sarasota, FL &middot; Southwest Florida</span>
+    <span><a href="tel:+19413875399">(941) 387-5399</a> &nbsp;&middot;&nbsp; <a href="mailto:l.f.gallery03@gmail.com">l.f.gallery03@gmail.com</a></span>
+  </div>
+</div>
+
+<header class="site-header">
+  <div class="container">
+    <a class="brand" href="index.html">
+      <span class="brand-mark">LF<em>.</em></span>
+      <span>
+        <span style="display:block;font-family:var(--font-display);font-size:1.05rem;line-height:1;color:var(--lf-ink);">Property Media</span>
+        <span class="brand-tag">Sarasota &middot; Florida</span>
+      </span>
+    </a>
+    <button class="nav-toggle" aria-label="Open menu" aria-expanded="false" onclick="document.querySelector('.main-nav').classList.toggle('open');document.querySelector('.nav-overlay').classList.toggle('open');this.setAttribute('aria-expanded',this.getAttribute('aria-expanded')==='false')">
+      <span></span><span></span><span></span>
+    </button>
+    <div class="nav-overlay" onclick="document.querySelector('.main-nav').classList.remove('open');this.classList.remove('open');document.querySelector('.nav-toggle').setAttribute('aria-expanded','false')"></div>
+    <nav class="main-nav" aria-label="Main">
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="packages.html">Packages</a></li>
+        <li><a href="gallery.html">Gallery</a></li>
+        <li><a href="about.html">About</a></li>
+        <li><a href="faq.html">FAQ</a></li>
+        <li><a class="nav-cta active" href="contact.html">Book Now</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+
+<section class="hero" style="padding:100px 0 60px;">
+  <div class="container">
+    <div class="section-head" style="margin-bottom:0;">
+      <span class="kicker">Book A Shoot</span>
+      <h1 style="font-size:clamp(2.4rem,5vw,3.6rem);">Let's build <em>your listing's</em> best first impression.</h1>
+      <p class="lede-large" style="margin:24px auto 0;">Tell us about the property or the vehicle. We respond in under 24 hours with a firm quote and available dates.</p>
+    </div>
+  </div>
+</section>
+
+<section style="padding-top:40px;">
+  <div class="container">
+    <div class="split" style="align-items:flex-start;">
+      <div class="reveal">
+        <span class="kicker">Quote Request</span>
+        <h2>Send us the details</h2>
+        <span class="divider"></span>
+        <form action="https://formsubmit.co/l.f.gallery03@gmail.com" method="POST" class="form-grid" style="margin-top:16px;">
+          <input type="hidden" name="_subject" value="New LF Property Media inquiry" />
+          <input type="hidden" name="_captcha" value="false" />
+          <input type="hidden" name="_template" value="table" />
+          <input type="text" name="_honey" style="display:none" />
+
+          <div class="field">
+            <label for="name">Name</label>
+            <input id="name" name="name" type="text" required />
+          </div>
+          <div class="field">
+            <label for="phone">Phone</label>
+            <input id="phone" name="phone" type="tel" required />
+          </div>
+          <div class="field full">
+            <label for="email">Email</label>
+            <input id="email" name="email" type="email" required />
+          </div>
+
+          <div class="field">
+            <label for="service">Service</label>
+            <select id="service" name="service">
+              <option>Real Estate Photography</option>
+              <option>Automotive Photography</option>
+              <option>Drone / Aerial Only</option>
+              <option>Virtual Tour Only</option>
+              <option>Video Only</option>
+              <option>Not Sure Yet</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="package">Package</label>
+            <select id="package" name="package">
+              <option value="">— Select a package —</option>
+              <option>Signature — $360</option>
+              <option>Premier — $550</option>
+              <option>Platinum — $795</option>
+              <option>À la carte / Custom</option>
+            </select>
+          </div>
+
+          <div class="field full">
+            <label for="address">Property Address or Shoot Location</label>
+            <input id="address" name="address" type="text" placeholder="Street, city, zip (optional if automotive)" />
+          </div>
+
+          <div class="field">
+            <label for="sqft">Square Footage</label>
+            <input id="sqft" name="sqft" type="text" placeholder="e.g., 2,400 (real estate only)" />
+          </div>
+          <div class="field">
+            <label for="date">Preferred Shoot Date</label>
+            <input id="date" name="date" type="date" />
+          </div>
+
+          <div class="field full">
+            <label for="notes">Project Notes</label>
+            <textarea id="notes" name="notes" placeholder="Tell us about the property, the vehicle, your timeline, any special requests…"></textarea>
+          </div>
+
+          <div class="full">
+            <button type="submit" class="btn btn-primary" style="width:100%;padding:18px;">Send Inquiry</button>
+            <p style="font-size:0.82rem;color:var(--lf-muted);margin-top:14px;text-align:center;">We typically respond within a few hours. Quotes are confirmed after verifying square footage.</p>
+          </div>
+        </form>
+      </div>
+
+      <div class="reveal reveal-delay-1">
+        <span class="kicker">Direct Contact</span>
+        <h2>Prefer to talk first?</h2>
+        <span class="divider"></span>
+        <p>Text or call is usually fastest. If you're emailing photos of a car or referencing an existing MLS listing, email works great.</p>
+
+        <div style="margin-top:32px;display:grid;gap:20px;">
+          <a href="tel:+19413875399" class="alacarte-item" style="text-decoration:none;display:block;">
+            <h4>Call or Text</h4>
+            <div class="alacarte-price">(941) 387-5399</div>
+            <p>Mon – Sat, 8am – 7pm ET</p>
+          </a>
+          <a href="mailto:l.f.gallery03@gmail.com" class="alacarte-item" style="text-decoration:none;display:block;">
+            <h4>Email</h4>
+            <div class="alacarte-price" style="font-size:1.1rem;">l.f.gallery03@gmail.com</div>
+            <p>Responses within 24 hours, always.</p>
+          </a>
+          <a href="https://instagram.com/lfpropertymedia" target="_blank" rel="noopener" class="alacarte-item" style="text-decoration:none;display:block;">
+            <h4>Instagram</h4>
+            <div class="alacarte-price" style="font-size:1.2rem;">@lfpropertymedia</div>
+            <p>DM us — we check daily. See the latest work first.</p>
+          </a>
+          <div class="alacarte-item">
+            <h4>Service Area</h4>
+            <div class="alacarte-price" style="font-size:1.1rem;">Sarasota &amp; SW Florida</div>
+            <p>Sarasota, Siesta Key, Lakewood Ranch, Venice, Osprey, Bradenton, Longboat Key, Bird Key, Palmer Ranch, and surrounding. Travel outside this area available on request.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="cta-banner">
+  <div class="container">
+    <h2>Not sure which package you need?</h2>
+    <p>Start with a free consultation. We'll walk the property (virtually or in person) and map out a package.</p>
+    <a href="mailto:l.f.gallery03@gmail.com" class="btn btn-light">Request Consultation</a>
+  </div>
+</section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <span class="footer-brand">LF<em>.</em> Property Media</span>
+        <p>Premium real estate and automotive photography serving Sarasota and Southwest Florida since 2021.</p>
+      </div>
+      <div>
+        <h4>Explore</h4>
+        <ul>
+          <li><a href="index.html">Home</a></li>
+          <li><a href="packages.html">Packages</a></li>
+          <li><a href="gallery.html">Gallery</a></li>
+          <li><a href="about.html">About</a></li>
+          <li><a href="faq.html">FAQ</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Book</h4>
+        <ul>
+          <li><a href="contact.html">Book a Shoot</a></li>
+          <li><a href="contact.html">Free Consultation</a></li>
+          <li><a href="packages.html">View Packages</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Get In Touch</h4>
+        <ul>
+          <li><a href="tel:+19413875399">(941) 387-5399</a></li>
+          <li><a href="mailto:l.f.gallery03@gmail.com">l.f.gallery03@gmail.com</a></li>
+          <li>Sarasota, FL</li>
+          <li><a href="https://instagram.com/lfpropertymedia" target="_blank" rel="noopener">@lfpropertymedia</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>&copy; <span id="yr"></span> LF Property Media. All rights reserved.</span>
+      <span>Sarasota, FL &middot; Real Estate &middot; Automotive</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+document.getElementById('yr').textContent = new Date().getFullYear();
+
+// Prefill package from ?package= query string
+const params = new URLSearchParams(window.location.search);
+const pkg = params.get('package');
+if (pkg) {
+  const sel = document.getElementById('package');
+  const map = { signature: 'Signature — $360', premier: 'Premier — $550', platinum: 'Platinum — $795' };
+  const target = map[pkg.toLowerCase()];
+  if (target) {
+    for (let i=0; i<sel.options.length; i++) {
+      if (sel.options[i].text === target) { sel.selectedIndex = i; break; }
+    }
+  }
+}
+
+const reveals = document.querySelectorAll('.reveal');
+if ('IntersectionObserver' in window) {
+  const observer = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) { entry.target.classList.add('visible'); observer.unobserve(entry.target); }
+    });
+  }, { threshold: 0.12 });
+  reveals.forEach(function(el) { observer.observe(el); });
+} else {
+  reveals.forEach(function(el) { el.classList.add('visible'); });
+}
+</script>
+</body>
+</html>

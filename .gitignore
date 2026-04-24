@@ -1,0 +1,33 @@
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Dependency dirs (none expected for static site, defensive)
+node_modules/
+
+# Logs & temp
+*.log
+*.tmp
+
+# Local env
+.env
+.env.local
+
+# Large source files (raw photos / videos) — keep out of git
+*.RAW
+*.CR2
+*.CR3
+*.ARW
+*.NEF
+*.DNG
+
+# Unrelated files that happen to live in the working folder
+Dallas*.stl
+*.stl
