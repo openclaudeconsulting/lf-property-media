@@ -4,10 +4,11 @@ This file is auto-loaded by Claude Code. It orients you without needing to re-re
 
 ## What this is
 
-A static marketing website for **LF Property Media**, a real estate and automotive photography studio based in Sarasota, Florida. Two core verticals:
+A static marketing website for **LF Property Media**, a real estate photography studio based in Sarasota, Florida. Single focus:
 
-1. **Real estate photography** — listings, MLS-ready photos, drone aerials, reels, virtual tours, floor plans.
-2. **Automotive photography** — dealer inventory, private collections, custom builds, events.
+**Real estate photography** — listings, MLS-ready photos, drone aerials, reels, virtual tours, floor plans.
+
+> Automotive photography was split out to a separate site/brand in 2026-04. Do not re-introduce automotive copy, gallery tabs, service options, or à la carte items on this site without explicit owner approval.
 
 Tagline: **"Visuals that sell. Branding that speaks."**
 
@@ -24,10 +25,10 @@ Tagline: **"Visuals that sell. Branding that speaks."**
 lf-property-media/
 ├── index.html          Home — hero, reel, stats, 2 pillars, packages, à la carte, social, CTA
 ├── packages.html       Full pricing + sq-ft adjustment + à la carte + notes
-├── gallery.html        Tabbed portfolio: Real Estate / Automotive / Drone
-├── about.html          Story, 6 principles, two-specialty rationale
+├── gallery.html        Tabbed portfolio: Interior & Exterior / Drone & Aerial
+├── about.html          Story, 6 principles, specialization rationale
 ├── contact.html        Formsubmit.co form + direct contact options (tel/email/IG)
-├── faq.html            11 Q&A with FAQPage JSON-LD
+├── faq.html            10 Q&A with FAQPage JSON-LD
 ├── 404.html            Branded not-found
 ├── css/styles.css      All styles — tokens in :root, component classes
 ├── images/favicon.svg  LF monogram favicon
@@ -69,7 +70,7 @@ Base prices cover homes up to 1,600 sq ft:
 
 **Square footage adjustment:** +$150 per additional 1,000 sq ft (or portion thereof) beyond 1,600 sq ft, applied to all three packages. Stated transparently in the UI; never hidden.
 
-**À la carte:** 10 photos $100 · drone $20 ea / $100 set of 5 · creative reel $300 · pro video $425 · virtual tour $200 · automotive shoots quoted per job.
+**À la carte:** 10 photos $100 · drone $20 ea / $100 set of 5 · creative reel $300 · pro video $425 · virtual tour $200.
 
 ## Contact info (do not change)
 

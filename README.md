@@ -1,6 +1,6 @@
 # LF Property Media — Website
 
-Static marketing site for **LF Property Media**, a real estate and automotive photography studio in Sarasota, Florida.
+Static marketing site for **LF Property Media**, a real estate photography studio in Sarasota, Florida.
 
 ## Stack
 
@@ -13,12 +13,12 @@ Static marketing site for **LF Property Media**, a real estate and automotive ph
 
 | File | Purpose |
 |---|---|
-| `index.html` | Home — hero, reel, experience stats, two-specialty pillars, 3 packages preview, à la carte, social follow, CTA |
+| `index.html` | Home — hero, reel, experience stats, what-we-shoot pillars, 3 packages preview, à la carte, social follow, CTA |
 | `packages.html` | Full pricing: Signature/Premier/Platinum + square-footage adjustment + à la carte |
-| `gallery.html` | Tabbed portfolio — Real Estate / Automotive / Drone |
-| `about.html` | Story, principles, two-specialty rationale |
+| `gallery.html` | Tabbed portfolio — Interior & Exterior / Drone & Aerial |
+| `about.html` | Story, principles, specialization rationale |
 | `contact.html` | Inquiry form (Formsubmit.co) + direct contact options |
-| `faq.html` | 11 Q&A with FAQPage JSON-LD |
+| `faq.html` | 10 Q&A with FAQPage JSON-LD |
 | `404.html` | Branded not-found page |
 
 ## Supporting files
@@ -36,10 +36,10 @@ The site currently renders placeholder tiles. Replace `.ph-tile` divs with real 
 
 - `images/hero-realestate.jpg` — home page hero (4:5 portrait, bright interior)
 - `images/featured-reel.mp4` + `images/reel-poster.jpg` — home page reel
-- `images/pillar-realestate.jpg`, `images/pillar-automotive.jpg` — two-specialty cards on home
+- `images/pillar-interior.jpg`, `images/pillar-drone.jpg` — what-we-shoot cards on home
 - `images/about-founder.jpg`, `images/about-bts.jpg` — about page
 - `images/og-image.jpg` — 1200×630 open-graph share image
-- Gallery: `images/re-01.jpg`, `re-02.jpg` … `auto-01.jpg` … `aerial-01.jpg`
+- Gallery: `images/re-01.jpg`, `re-02.jpg` … `aerial-01.jpg` …
 
 Each placeholder has an HTML comment showing the exact `<img>` tag to use.
 
