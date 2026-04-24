@@ -30,18 +30,22 @@ Static marketing site for **LF Property Media**, a real estate photography studi
 - `_headers`, `_redirects` — Cloudflare Pages config
 - `.gitignore` — excludes OS junk, editor files, raw photo formats, unrelated STLs
 
-## Images — what to drop in
+## Images — what's live and what's still placeholder
 
-The site currently renders placeholder tiles. Replace `.ph-tile` divs with real `<img>` tags. Suggested filenames:
+Real photos live in `images/` as AVIF. Filenames in use:
 
-- `images/hero-realestate.jpg` — home page hero (4:5 portrait, bright interior)
-- `images/featured-reel.mp4` + `images/reel-poster.jpg` — home page reel
-- `images/pillar-interior.jpg`, `images/pillar-drone.jpg` — what-we-shoot cards on home
-- `images/about-founder.jpg`, `images/about-bts.jpg` — about page
-- `images/og-image.jpg` — 1200×630 open-graph share image
-- Gallery: `images/re-01.jpg`, `re-02.jpg` … `aerial-01.jpg` …
+- `images/landing-page-house.avif` — home page hero (4:5 portrait)
+- `images/reel-1.avif` — home page featured reel (still frame)
+- `images/interior-livingroom.avif` — home Pillar 1 + gallery "Living room" tile
+- `images/exterior-sunset.avif` — home Pillar 2 + gallery "Coastline sunset" drone tile
+- `images/interior-kitchen.avif` — gallery "Kitchen" tile
+- `images/exterior-beach-crib.avif` — gallery "Pool deck twilight" tile
+- `images/reel-2.avif` — about page "Behind the scenes" tile
 
-Each placeholder has an HTML comment showing the exact `<img>` tag to use.
+Remaining `.ph-tile` placeholders (gallery has ~11, about has the founder portrait) still render a cream tile with a label — drop in `<img src="images/..." alt="..." style="aspect-ratio:...;object-fit:cover;width:100%;" />` following the pattern in the swapped tiles above.
+
+Also recommended:
+- `images/og-image.jpg` — 1200×630 open-graph share image (not yet added).
 
 ## Brand tokens
 
