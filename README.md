@@ -6,7 +6,7 @@ Static marketing site for **LF Property Media**, a real estate photography studi
 
 - Plain HTML + CSS. No build step, no framework.
 - Google Fonts (Playfair Display + Inter) loaded from CDN.
-- Contact form submits via [Formsubmit.co](https://formsubmit.co) to `l.f.gallery03@gmail.com`.
+- Contact form is a [HoneyBook](https://www.honeybook.com) inquiry placement (placement ID `687e66170ec3430007ca9da6`); leads land in the owner's HoneyBook dashboard.
 - Designed to deploy on **Cloudflare Pages** (git-connected auto-deploy on push to `main`).
 
 ## Pages
@@ -17,7 +17,7 @@ Static marketing site for **LF Property Media**, a real estate photography studi
 | `packages.html` | Full pricing: Signature/Premier/Platinum + square-footage adjustment + à la carte |
 | `gallery.html` | Tabbed portfolio — Interior & Exterior / Drone & Aerial |
 | `about.html` | Story, principles, specialization rationale |
-| `contact.html` | Inquiry form (Formsubmit.co) + direct contact options |
+| `contact.html` | HoneyBook inquiry widget + direct contact options |
 | `faq.html` | 10 Q&A with FAQPage JSON-LD |
 | `404.html` | Branded not-found page |
 
@@ -81,8 +81,13 @@ python -m http.server 8000
 4. Add custom domain (e.g., `lfpropertymedia.com`) under Custom domains.
 5. Any push to `main` auto-deploys.
 
-## Contact form (Formsubmit.co)
+## Contact form (HoneyBook)
 
-The first time someone submits the form, Formsubmit emails `l.f.gallery03@gmail.com` with a confirmation link. Click it once — after that, all inquiries land in the inbox formatted as a table.
+The contact form is a HoneyBook placement widget. Two pieces in `contact.html`:
 
-To change the recipient, update the `action` URL on `contact.html:~64`.
+1. The placement target `<div class="hb-p-687e66170ec3430007ca9da6-2"></div>` — HoneyBook injects the live form here on load.
+2. The loader script just before `</body>` — fetches `placement-controller.min.js` and binds it to placement ID `687e66170ec3430007ca9da6`.
+
+A 1×1 tracking pixel sits next to the placement div. Submitted inquiries land in the owner's HoneyBook dashboard, not in email — manage form fields, automations, and notification routing inside HoneyBook.
+
+To swap to a different placement (e.g., a new HoneyBook account), replace every occurrence of `687e66170ec3430007ca9da6` in `contact.html` with the new placement ID.

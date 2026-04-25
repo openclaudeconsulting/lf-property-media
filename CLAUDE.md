@@ -16,7 +16,7 @@ Tagline: **"Visuals that sell. Branding that speaks."**
 
 - Plain HTML + CSS. No framework, no build step.
 - Google Fonts (Playfair Display + Inter) via CDN.
-- Contact form posts to **Formsubmit.co** → `l.f.gallery03@gmail.com`.
+- Contact form is a **HoneyBook** placement widget (placement ID `687e66170ec3430007ca9da6`); inquiries route to the owner's HoneyBook dashboard. Loader script + tracking pixel live on `contact.html` only.
 - Deploy target: **Cloudflare Pages** (git-connected).
 
 ## File map
@@ -27,7 +27,7 @@ lf-property-media/
 ├── packages.html       Full pricing + sq-ft adjustment + à la carte + notes
 ├── gallery.html        Tabbed portfolio: Interior & Exterior / Drone & Aerial
 ├── about.html          Story, 6 principles, specialization rationale
-├── contact.html        Formsubmit.co form + direct contact options (tel/email/IG)
+├── contact.html        HoneyBook inquiry widget + direct contact options (tel/email/IG)
 ├── faq.html            10 Q&A with FAQPage JSON-LD
 ├── 404.html            Branded not-found
 ├── css/styles.css      All styles — tokens in :root, component classes
