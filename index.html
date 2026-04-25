@@ -98,7 +98,7 @@
 <section class="reel-section">
   <div class="container">
     <div class="reel-frame reveal">
-      <video src="images/livingroom-pool-reel.mp4" poster="images/exterior-beach-crib.avif" controls preload="metadata" playsinline></video>
+      <video src="images/livingroom-pool-reel.mp4" id="featured-reel" controls muted loop playsinline preload="auto"></video>
     </div>
     <div class="reel-caption">
       <span>Featured Work</span>
@@ -343,6 +343,22 @@ if ('IntersectionObserver' in window) {
   reveals.forEach(function(el) { observer.observe(el); });
 } else {
   reveals.forEach(function(el) { el.classList.add('visible'); });
+}
+
+// Auto-play the Featured Work reel when it scrolls into view; pause when it leaves.
+const reel = document.getElementById('featured-reel');
+if (reel && 'IntersectionObserver' in window) {
+  const reelObserver = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) {
+        const p = reel.play();
+        if (p && typeof p.catch === 'function') { p.catch(function() {}); }
+      } else {
+        reel.pause();
+      }
+    });
+  }, { threshold: 0.5 });
+  reelObserver.observe(reel);
 }
 </script>
 </body>
