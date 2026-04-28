@@ -201,11 +201,12 @@ if ('IntersectionObserver' in window) {
 //   Stage 1 — first 6 Interior & Exterior tiles load in parallel with
 //             fetchpriority=high so the top-of-fold paints fast.
 //   Stage 2 — once stage 1 finishes, the remaining 9 tiles in that panel
-//             load in parallel as a wave (matches the diagonal feel of
-//             the Drone panel). Browser prioritises earlier-in-DOM tiles.
+//             load STRICTLY ONE AT A TIME, top-to-bottom in document order.
+//             Tile N+1 doesn't begin until N is fully in. Owner preference.
 //   Stage 3 — once the I&E panel is fully loaded, all 15 aerial tiles
-//             preload in the background. If the visitor opens the Drone
-//             tab before then, aerial loading kicks off immediately.
+//             preload in the background as a parallel diagonal wave.
+//             If the visitor opens the Drone tab before then, aerial
+//             loading kicks off immediately.
 (function() {
   const ieImages = Array.from(document.querySelectorAll('#panel-realestate .gallery-masonry img'));
   const aerialImages = Array.from(document.querySelectorAll('#panel-drone .gallery-masonry img'));
@@ -241,6 +242,17 @@ if ('IntersectionObserver' in window) {
     }));
   }
 
+  // Activate a list of images strictly one at a time, in array order.
+  // Each image waits for the previous to finish loading before starting.
+  function loadSequentially(imgs) {
+    return imgs.reduce(function(prev, img) {
+      return prev.then(function() {
+        activateOne(img);
+        return whenLoaded(img).then(function() { clearPending(img); });
+      });
+    }, Promise.resolve());
+  }
+
   function activateAerial() {
     if (aerialActivated) return;
     aerialActivated = true;
@@ -251,10 +263,10 @@ if ('IntersectionObserver' in window) {
   const remainingIE = ieImages.slice(6);
 
   // Stage 1: parallel load of first 6 (already fetching via src=).
-  // Stage 2: parallel load of remaining 9 — diagonal wave like Drone panel.
+  // Stage 2: top-to-bottom sequential load of remaining 9.
   // Stage 3: parallel preload of aerial tiles.
   loadInParallel(firstSix)
-    .then(function() { return loadInParallel(remainingIE); })
+    .then(function() { return loadSequentially(remainingIE); })
     .then(activateAerial);
 
   // Defensive: if visitor opens the Drone tab early, kick off aerial right away.
