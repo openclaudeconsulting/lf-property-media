@@ -201,8 +201,8 @@ if ('IntersectionObserver' in window) {
 //   Stage 1 — first 6 Interior & Exterior tiles load in parallel with
 //             fetchpriority=high so the top-of-fold paints fast.
 //   Stage 2 — once stage 1 finishes, the remaining 9 tiles in that panel
-//             load STRICTLY ONE AT A TIME, top-to-bottom in document order.
-//             Top is highest priority — image N+1 won't start until N is in.
+//             load in parallel as a wave (matches the diagonal feel of
+//             the Drone panel). Browser prioritises earlier-in-DOM tiles.
 //   Stage 3 — once the I&E panel is fully loaded, all 15 aerial tiles
 //             preload in the background. If the visitor opens the Drone
 //             tab before then, aerial loading kicks off immediately.
@@ -241,17 +241,6 @@ if ('IntersectionObserver' in window) {
     }));
   }
 
-  // Activate a list of images strictly one at a time, in array order.
-  // Each image waits for the previous to finish loading.
-  function loadSequentially(imgs) {
-    return imgs.reduce(function(prev, img) {
-      return prev.then(function() {
-        activateOne(img);
-        return whenLoaded(img).then(function() { clearPending(img); });
-      });
-    }, Promise.resolve());
-  }
-
   function activateAerial() {
     if (aerialActivated) return;
     aerialActivated = true;
@@ -261,11 +250,11 @@ if ('IntersectionObserver' in window) {
   const firstSix = ieImages.slice(0, 6);
   const remainingIE = ieImages.slice(6);
 
-  // Stage 1: wait for first six (parallel, already loading via src=).
-  // Stage 2: top-to-bottom sequential load of remaining 9.
+  // Stage 1: parallel load of first 6 (already fetching via src=).
+  // Stage 2: parallel load of remaining 9 — diagonal wave like Drone panel.
   // Stage 3: parallel preload of aerial tiles.
   loadInParallel(firstSix)
-    .then(function() { return loadSequentially(remainingIE); })
+    .then(function() { return loadInParallel(remainingIE); })
     .then(activateAerial);
 
   // Defensive: if visitor opens the Drone tab early, kick off aerial right away.
