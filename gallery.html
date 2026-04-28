@@ -197,17 +197,31 @@ if ('IntersectionObserver' in window) {
   reveals.forEach(function(el) { el.classList.add('visible'); });
 }
 
-// Staged image loading driven by VISUAL position, not document order.
-// CSS columns flows tiles top-to-bottom-by-column, but the eye reads
-// row-by-row left-to-right. So we measure each tile's rendered position
-// and load in that reading order.
-//   Stage 1 — first 6 in visual order (top two rows) load in parallel
-//             with fetchpriority=high.
-//   Stage 2 — remaining tiles load STRICTLY ONE AT A TIME, walking down
-//             row-by-row, left-to-right within a row.
-//   Stage 3 — once I&E is in, all aerial tiles preload as a parallel
-//             diagonal wave. Opening the Drone tab early kicks aerial
-//             off immediately.
+// ============================================================
+//  INTERIOR & EXTERIOR — MANUAL LOAD ORDER
+//  Top of the array loads first. Drag lines around to revise.
+//  First 6 entries load in parallel (top of fold). Remaining
+//  9 load one at a time, in the order written. After this
+//  panel finishes, the aerial panel preloads in the background.
+// ============================================================
+const IE_LOAD_ORDER = [
+  'images/exterior/_DSC0964-twilight.jpg',  //  1   Twilight · Front Facade  (top-left)
+  'images/interior/DSC03198.jpg',           //  2   Pendant Kitchen          (top-middle)
+  'images/exterior/_DSC1517.jpg',           //  3   Outdoor Living Suite     (top-right)
+  'images/interior/_DSC1457.jpg',           //  4   Open-Concept Living
+  'images/exterior/_DSC1542.jpg',           //  5   Two-Story Estate
+  'images/interior/_DSC1487.jpg',           //  6   Master Suite
+  'images/exterior/DSC03249.jpg',           //  7   Screened Pool · Sarasota
+  'images/interior/_DSC1481.jpg',           //  8   Chef's Kitchen
+  'images/interior/DSC05344.jpg',           //  9   New Construction · Open Plan
+  'images/interior/_DSC1448.jpg',           // 10   Coffered-Ceiling Living
+  'images/exterior/_DSC1505.jpg',           // 11   Lakefront Fire Pit
+  'images/exterior/Twilight-1.jpg',         // 12   Twilight · Single-Story
+  'images/exterior/_DSC1496.jpg',           // 13   Lakefront Lanai
+  'images/interior/DSC03174.jpg',           // 14   Vaulted Living
+  'images/interior/DSC05368.jpg',           // 15   Backlit Vanity
+];
+
 (function() {
   const ieImages = Array.from(document.querySelectorAll('#panel-realestate .gallery-masonry img'));
   const aerialImages = Array.from(document.querySelectorAll('#panel-drone .gallery-masonry img'));
@@ -251,32 +265,28 @@ if ('IntersectionObserver' in window) {
     }, Promise.resolve());
   }
 
-  // Sort images by their figure's rendered (top, left). Items within ~40px
-  // of each other vertically count as the same row and are then sorted left
-  // to right.
-  function visualOrder(imgs) {
-    return imgs.slice().sort(function(a, b) {
-      const aRect = a.closest('figure').getBoundingClientRect();
-      const bRect = b.closest('figure').getBoundingClientRect();
-      if (Math.abs(aRect.top - bRect.top) > 40) return aRect.top - bRect.top;
-      return aRect.left - bRect.left;
-    });
-  }
-
   function activateAerial() {
     if (aerialActivated) return;
     aerialActivated = true;
     loadInParallel(aerialImages);
   }
 
-  // Compute visual order from the all-pending-skeleton initial layout.
-  const ieOrdered = visualOrder(ieImages);
+  // Sort the panel's images according to the manual IE_LOAD_ORDER list.
+  // Anything not in the list (shouldn't happen) falls to the back.
+  const orderRank = new Map();
+  IE_LOAD_ORDER.forEach(function(src, i) { orderRank.set(src, i); });
+  const ieOrdered = ieImages.slice().sort(function(a, b) {
+    const ra = orderRank.has(a.dataset.src) ? orderRank.get(a.dataset.src) : 999;
+    const rb = orderRank.has(b.dataset.src) ? orderRank.get(b.dataset.src) : 999;
+    return ra - rb;
+  });
+
   const firstSix = ieOrdered.slice(0, 6);
   const remainingIE = ieOrdered.slice(6);
-
-  // Boost fetch priority for the visually-top six.
   firstSix.forEach(function(img) { img.setAttribute('fetchpriority', 'high'); });
 
+  // Stage 1: parallel + high priority. Stage 2: strict sequential.
+  // Stage 3: aerial parallel preload.
   loadInParallel(firstSix)
     .then(function() { return loadSequentially(remainingIE); })
     .then(activateAerial);
