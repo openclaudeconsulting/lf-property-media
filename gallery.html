@@ -197,10 +197,15 @@ if ('IntersectionObserver' in window) {
   reveals.forEach(function(el) { el.classList.add('visible'); });
 }
 
-// Staged image loading. The first 6 photos in the Interior & Exterior panel
-// load eagerly. After they finish, the remaining 9 in that panel are activated.
-// Once those finish, the 15 aerial photos preload in the background. If the
-// visitor switches to the Drone tab before that, kick off the aerial load now.
+// Staged image loading.
+//   Stage 1 — first 6 Interior & Exterior tiles load in parallel with
+//             fetchpriority=high so the top-of-fold paints fast.
+//   Stage 2 — once stage 1 finishes, the remaining 9 tiles in that panel
+//             load STRICTLY ONE AT A TIME, top-to-bottom in document order.
+//             Top is highest priority — image N+1 won't start until N is in.
+//   Stage 3 — once the I&E panel is fully loaded, all 15 aerial tiles
+//             preload in the background. If the visitor opens the Drone
+//             tab before then, aerial loading kicks off immediately.
 (function() {
   const ieImages = Array.from(document.querySelectorAll('#panel-realestate .gallery-masonry img'));
   const aerialImages = Array.from(document.querySelectorAll('#panel-drone .gallery-masonry img'));
@@ -208,45 +213,59 @@ if ('IntersectionObserver' in window) {
 
   let aerialActivated = false;
 
-  function activate(imgs) {
-    imgs.forEach(function(img) {
-      if (img.dataset.src && !img.getAttribute('src')) {
-        img.src = img.dataset.src;
-      }
-      const fig = img.closest('figure');
-      if (!fig) return;
-      function clearPending() { fig.classList.remove('is-pending'); }
-      if (img.complete && img.naturalWidth > 0) clearPending();
-      else {
-        img.addEventListener('load', clearPending, { once: true });
-        img.addEventListener('error', clearPending, { once: true });
-      }
+  function activateOne(img) {
+    if (img.dataset.src && !img.getAttribute('src')) {
+      img.src = img.dataset.src;
+    }
+  }
+
+  function clearPending(img) {
+    const fig = img.closest('figure');
+    if (fig) fig.classList.remove('is-pending');
+  }
+
+  function whenLoaded(img) {
+    if (img.src && img.complete && img.naturalWidth > 0) return Promise.resolve();
+    if (!img.src) return Promise.resolve();
+    return new Promise(function(resolve) {
+      img.addEventListener('load', resolve, { once: true });
+      img.addEventListener('error', resolve, { once: true });
     });
   }
 
-  function whenAllLoaded(imgs) {
+  // Activate a list of images in parallel and resolve when all have finished.
+  function loadInParallel(imgs) {
+    imgs.forEach(activateOne);
     return Promise.all(imgs.map(function(img) {
-      if (img.src && img.complete && img.naturalWidth > 0) return Promise.resolve();
-      if (!img.src) return Promise.resolve(); // not activated yet, treat as resolved
-      return new Promise(function(resolve) {
-        img.addEventListener('load', resolve, { once: true });
-        img.addEventListener('error', resolve, { once: true });
-      });
+      return whenLoaded(img).then(function() { clearPending(img); });
     }));
+  }
+
+  // Activate a list of images strictly one at a time, in array order.
+  // Each image waits for the previous to finish loading.
+  function loadSequentially(imgs) {
+    return imgs.reduce(function(prev, img) {
+      return prev.then(function() {
+        activateOne(img);
+        return whenLoaded(img).then(function() { clearPending(img); });
+      });
+    }, Promise.resolve());
   }
 
   function activateAerial() {
     if (aerialActivated) return;
     aerialActivated = true;
-    activate(aerialImages);
+    loadInParallel(aerialImages);
   }
 
   const firstSix = ieImages.slice(0, 6);
   const remainingIE = ieImages.slice(6);
 
-  // Stage 1: wait for first six → Stage 2: activate remaining I&E → Stage 3: aerial.
-  whenAllLoaded(firstSix)
-    .then(function() { activate(remainingIE); return whenAllLoaded(remainingIE); })
+  // Stage 1: wait for first six (parallel, already loading via src=).
+  // Stage 2: top-to-bottom sequential load of remaining 9.
+  // Stage 3: parallel preload of aerial tiles.
+  loadInParallel(firstSix)
+    .then(function() { return loadSequentially(remainingIE); })
     .then(activateAerial);
 
   // Defensive: if visitor opens the Drone tab early, kick off aerial right away.
