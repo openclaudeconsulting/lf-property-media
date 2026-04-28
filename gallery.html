@@ -119,6 +119,14 @@
   </div>
 </section>
 
+<div id="lightbox" class="lightbox" aria-hidden="true" role="dialog" aria-label="Photo viewer">
+  <button class="lightbox-button lightbox-close" type="button" aria-label="Close">&times;</button>
+  <button class="lightbox-button lightbox-prev" type="button" aria-label="Previous photo">&lsaquo;</button>
+  <img class="lightbox-image" src="" alt="" />
+  <button class="lightbox-button lightbox-next" type="button" aria-label="Next photo">&rsaquo;</button>
+  <div class="lightbox-caption" aria-live="polite"></div>
+</div>
+
 </main>
 
 <footer class="site-footer">
@@ -188,6 +196,80 @@ if ('IntersectionObserver' in window) {
 } else {
   reveals.forEach(function(el) { el.classList.add('visible'); });
 }
+
+// Lightbox: click any gallery photo to open full-screen viewer with prev/next.
+(function() {
+  const lightbox = document.getElementById('lightbox');
+  if (!lightbox) return;
+  const lbImage = lightbox.querySelector('.lightbox-image');
+  const lbCaption = lightbox.querySelector('.lightbox-caption');
+  const btnClose = lightbox.querySelector('.lightbox-close');
+  const btnPrev = lightbox.querySelector('.lightbox-prev');
+  const btnNext = lightbox.querySelector('.lightbox-next');
+
+  let currentList = [];
+  let currentIndex = 0;
+
+  function show() {
+    const img = currentList[currentIndex];
+    if (!img) return;
+    lbImage.src = img.src;
+    lbImage.alt = img.alt || '';
+    const figcap = img.closest('figure') ? img.closest('figure').querySelector('figcaption') : null;
+    lbCaption.textContent = figcap ? figcap.textContent : '';
+  }
+  function open(panel, index) {
+    currentList = Array.from(panel.querySelectorAll('figure img'));
+    currentIndex = index;
+    show();
+    lightbox.classList.add('is-open');
+    lightbox.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('lightbox-open');
+  }
+  function close() {
+    lightbox.classList.remove('is-open');
+    lightbox.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('lightbox-open');
+    lbImage.src = '';
+  }
+  function next() {
+    if (!currentList.length) return;
+    currentIndex = (currentIndex + 1) % currentList.length;
+    show();
+  }
+  function prev() {
+    if (!currentList.length) return;
+    currentIndex = (currentIndex - 1 + currentList.length) % currentList.length;
+    show();
+  }
+
+  document.querySelectorAll('.gallery-masonry figure img').forEach(function(img) {
+    img.addEventListener('click', function() {
+      const panel = img.closest('.gallery-panel');
+      if (!panel) return;
+      const figures = Array.from(panel.querySelectorAll('figure img'));
+      open(panel, figures.indexOf(img));
+    });
+  });
+
+  btnClose.addEventListener('click', close);
+  btnPrev.addEventListener('click', function(e) { e.stopPropagation(); prev(); });
+  btnNext.addEventListener('click', function(e) { e.stopPropagation(); next(); });
+  lbImage.addEventListener('click', function(e) { e.stopPropagation(); });
+
+  // Click backdrop to close
+  lightbox.addEventListener('click', function(e) {
+    if (e.target === lightbox) close();
+  });
+
+  // Keyboard
+  document.addEventListener('keydown', function(e) {
+    if (!lightbox.classList.contains('is-open')) return;
+    if (e.key === 'Escape') close();
+    else if (e.key === 'ArrowRight') next();
+    else if (e.key === 'ArrowLeft') prev();
+  });
+})();
 </script>
 </body>
 </html>

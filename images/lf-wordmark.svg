@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 120" width="240" height="120">
+  <!--
+    LF Property Media wordmark.
+    "LF" in Playfair Display, regular weight, ink charcoal (#1a1a1a).
+    "." italic, sand/terracotta accent (#b08968).
+    Editable text — to lock the look across machines without Playfair Display
+    installed, open in Illustrator / Inkscape / Figma and convert text to outlines.
+  -->
+  <text x="120" y="92"
+        text-anchor="middle"
+        font-family="'Playfair Display', Georgia, serif"
+        font-size="100"
+        font-weight="400"
+        letter-spacing="-1">
+    <tspan fill="#1a1a1a">LF</tspan><tspan fill="#b08968" font-style="italic">.</tspan>
+  </text>
+</svg>

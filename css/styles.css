@@ -776,6 +776,104 @@ section.bg-sand-soft { background: var(--lf-sand-soft); }
   transition: opacity 0.3s ease;
 }
 .gallery-masonry figure:hover figcaption { opacity: 1; }
+.gallery-masonry figure img { cursor: zoom-in; }
+
+/* ---------- Lightbox ---------- */
+.lightbox {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 10, 10, 0.95);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  padding: 24px;
+}
+.lightbox.is-open {
+  display: flex;
+  opacity: 1;
+}
+body.lightbox-open { overflow: hidden; }
+.lightbox-image {
+  max-width: 92vw;
+  max-height: 86vh;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: var(--radius-sm);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+  user-select: none;
+  -webkit-user-drag: none;
+}
+.lightbox-button {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: var(--lf-white);
+  cursor: pointer;
+  border-radius: 50%;
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  line-height: 1;
+  padding: 0;
+  transition: background 0.2s ease, transform 0.2s ease;
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+.lightbox-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+.lightbox-prev,
+.lightbox-next {
+  top: 50%;
+  transform: translateY(-50%);
+}
+.lightbox-prev:hover,
+.lightbox-next:hover {
+  transform: translateY(-50%) scale(1.06);
+}
+.lightbox-prev { left: 24px; }
+.lightbox-next { right: 24px; }
+.lightbox-close {
+  top: 24px;
+  right: 24px;
+  width: 44px;
+  height: 44px;
+  font-size: 1.25rem;
+}
+.lightbox-caption {
+  position: absolute;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: var(--lf-white);
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  background: rgba(0, 0, 0, 0.55);
+  padding: 9px 18px;
+  border-radius: 100px;
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  white-space: nowrap;
+  max-width: calc(100vw - 48px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+@media (max-width: 600px) {
+  .lightbox-prev { left: 12px; }
+  .lightbox-next { right: 12px; }
+  .lightbox-button { width: 44px; height: 44px; font-size: 1.4rem; }
+  .lightbox-close { top: 12px; right: 12px; width: 40px; height: 40px; font-size: 1.1rem; }
+  .lightbox-caption { bottom: 16px; font-size: 0.7rem; padding: 7px 14px; }
+}
 
 /* ---------- Forms ---------- */
 .form-grid {
