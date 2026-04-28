@@ -71,12 +71,12 @@
 
     <div id="panel-realestate" class="gallery-panel active">
       <div class="gallery-masonry">
-        <figure><img src="images/exterior/_DSC0964-twilight.jpg" alt="Twilight front facade with painted sky" decoding="async" fetchpriority="high" /><figcaption>Twilight · Front Facade</figcaption></figure>
-        <figure><img src="images/interior/_DSC1457.jpg" alt="Open-concept living, dining, and kitchen" decoding="async" fetchpriority="high" /><figcaption>Open-Concept Living</figcaption></figure>
-        <figure><img src="images/exterior/DSC03249.jpg" alt="Screened pool with fountains" decoding="async" fetchpriority="high" /><figcaption>Screened Pool · Sarasota</figcaption></figure>
-        <figure><img src="images/interior/_DSC1448.jpg" alt="Coffered ceiling living room with chandelier" decoding="async" fetchpriority="high" /><figcaption>Coffered-Ceiling Living</figcaption></figure>
-        <figure><img src="images/exterior/_DSC1496.jpg" alt="Covered patio with TV, fireplace, and lake view" decoding="async" fetchpriority="high" /><figcaption>Lakefront Lanai</figcaption></figure>
-        <figure><img src="images/interior/DSC03198.jpg" alt="Bright kitchen with pendant lighting" decoding="async" fetchpriority="high" /><figcaption>Pendant Kitchen</figcaption></figure>
+        <figure class="is-pending"><img data-src="images/exterior/_DSC0964-twilight.jpg" alt="Twilight front facade with painted sky" decoding="async" /><figcaption>Twilight · Front Facade</figcaption></figure>
+        <figure class="is-pending"><img data-src="images/interior/_DSC1457.jpg" alt="Open-concept living, dining, and kitchen" decoding="async" /><figcaption>Open-Concept Living</figcaption></figure>
+        <figure class="is-pending"><img data-src="images/exterior/DSC03249.jpg" alt="Screened pool with fountains" decoding="async" /><figcaption>Screened Pool · Sarasota</figcaption></figure>
+        <figure class="is-pending"><img data-src="images/interior/_DSC1448.jpg" alt="Coffered ceiling living room with chandelier" decoding="async" /><figcaption>Coffered-Ceiling Living</figcaption></figure>
+        <figure class="is-pending"><img data-src="images/exterior/_DSC1496.jpg" alt="Covered patio with TV, fireplace, and lake view" decoding="async" /><figcaption>Lakefront Lanai</figcaption></figure>
+        <figure class="is-pending"><img data-src="images/interior/DSC03198.jpg" alt="Bright kitchen with pendant lighting" decoding="async" /><figcaption>Pendant Kitchen</figcaption></figure>
         <figure class="is-pending"><img data-src="images/exterior/_DSC1542.jpg" alt="Modern two-story luxury home facade" decoding="async" /><figcaption>Two-Story Estate</figcaption></figure>
         <figure class="is-pending"><img data-src="images/interior/_DSC1481.jpg" alt="Custom range hood kitchen" decoding="async" /><figcaption>Chef's Kitchen</figcaption></figure>
         <figure class="is-pending"><img data-src="images/exterior/_DSC1505.jpg" alt="Lakefront patio with fire pit" decoding="async" /><figcaption>Lakefront Fire Pit</figcaption></figure>
@@ -197,16 +197,17 @@ if ('IntersectionObserver' in window) {
   reveals.forEach(function(el) { el.classList.add('visible'); });
 }
 
-// Staged image loading.
-//   Stage 1 — first 6 Interior & Exterior tiles load in parallel with
-//             fetchpriority=high so the top-of-fold paints fast.
-//   Stage 2 — once stage 1 finishes, the remaining 9 tiles in that panel
-//             load STRICTLY ONE AT A TIME, top-to-bottom in document order.
-//             Tile N+1 doesn't begin until N is fully in. Owner preference.
-//   Stage 3 — once the I&E panel is fully loaded, all 15 aerial tiles
-//             preload in the background as a parallel diagonal wave.
-//             If the visitor opens the Drone tab before then, aerial
-//             loading kicks off immediately.
+// Staged image loading driven by VISUAL position, not document order.
+// CSS columns flows tiles top-to-bottom-by-column, but the eye reads
+// row-by-row left-to-right. So we measure each tile's rendered position
+// and load in that reading order.
+//   Stage 1 — first 6 in visual order (top two rows) load in parallel
+//             with fetchpriority=high.
+//   Stage 2 — remaining tiles load STRICTLY ONE AT A TIME, walking down
+//             row-by-row, left-to-right within a row.
+//   Stage 3 — once I&E is in, all aerial tiles preload as a parallel
+//             diagonal wave. Opening the Drone tab early kicks aerial
+//             off immediately.
 (function() {
   const ieImages = Array.from(document.querySelectorAll('#panel-realestate .gallery-masonry img'));
   const aerialImages = Array.from(document.querySelectorAll('#panel-drone .gallery-masonry img'));
@@ -234,7 +235,6 @@ if ('IntersectionObserver' in window) {
     });
   }
 
-  // Activate a list of images in parallel and resolve when all have finished.
   function loadInParallel(imgs) {
     imgs.forEach(activateOne);
     return Promise.all(imgs.map(function(img) {
@@ -242,8 +242,6 @@ if ('IntersectionObserver' in window) {
     }));
   }
 
-  // Activate a list of images strictly one at a time, in array order.
-  // Each image waits for the previous to finish loading before starting.
   function loadSequentially(imgs) {
     return imgs.reduce(function(prev, img) {
       return prev.then(function() {
@@ -253,18 +251,32 @@ if ('IntersectionObserver' in window) {
     }, Promise.resolve());
   }
 
+  // Sort images by their figure's rendered (top, left). Items within ~40px
+  // of each other vertically count as the same row and are then sorted left
+  // to right.
+  function visualOrder(imgs) {
+    return imgs.slice().sort(function(a, b) {
+      const aRect = a.closest('figure').getBoundingClientRect();
+      const bRect = b.closest('figure').getBoundingClientRect();
+      if (Math.abs(aRect.top - bRect.top) > 40) return aRect.top - bRect.top;
+      return aRect.left - bRect.left;
+    });
+  }
+
   function activateAerial() {
     if (aerialActivated) return;
     aerialActivated = true;
     loadInParallel(aerialImages);
   }
 
-  const firstSix = ieImages.slice(0, 6);
-  const remainingIE = ieImages.slice(6);
+  // Compute visual order from the all-pending-skeleton initial layout.
+  const ieOrdered = visualOrder(ieImages);
+  const firstSix = ieOrdered.slice(0, 6);
+  const remainingIE = ieOrdered.slice(6);
 
-  // Stage 1: parallel load of first 6 (already fetching via src=).
-  // Stage 2: top-to-bottom sequential load of remaining 9.
-  // Stage 3: parallel preload of aerial tiles.
+  // Boost fetch priority for the visually-top six.
+  firstSix.forEach(function(img) { img.setAttribute('fetchpriority', 'high'); });
+
   loadInParallel(firstSix)
     .then(function() { return loadSequentially(remainingIE); })
     .then(activateAerial);
