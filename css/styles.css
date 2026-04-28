@@ -778,6 +778,19 @@ section.bg-sand-soft { background: var(--lf-sand-soft); }
 .gallery-masonry figure:hover figcaption { opacity: 1; }
 .gallery-masonry figure img { cursor: zoom-in; }
 
+/* Skeleton placeholder while staged loader holds back an image. */
+.gallery-masonry figure.is-pending {
+  min-height: 280px;
+  background: linear-gradient(110deg, var(--lf-cream) 8%, var(--lf-paper) 18%, var(--lf-cream) 33%);
+  background-size: 200% 100%;
+  animation: gallery-shimmer 1.6s ease-in-out infinite;
+}
+.gallery-masonry figure.is-pending img { display: none; }
+@keyframes gallery-shimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+
 /* ---------- Lightbox ---------- */
 .lightbox {
   position: fixed;
