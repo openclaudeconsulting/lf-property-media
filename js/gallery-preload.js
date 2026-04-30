@@ -34,21 +34,21 @@
     'images/interior/DSC03174.jpg',
     'images/interior/DSC05368.jpg',
     // Drone & Aerial.
-    'images/aerial/Bert-Smith-Subaru-Drone-21.png',
-    'images/aerial/Bert-Smith-Subaru-Drone-15.png',
+    'images/aerial/Bert-Smith-Subaru-Drone-21.jpg',
+    'images/aerial/Bert-Smith-Subaru-Drone-15.jpg',
     'images/aerial/DJI_0030.jpg',
-    'images/aerial/Bert-Smith-Subaru-Drone-17.png',
+    'images/aerial/Bert-Smith-Subaru-Drone-17.jpg',
     'images/aerial/DJI_0974-Enhanced-NR.jpg',
     'images/aerial/DJI_0980-Enhanced-NR.jpg',
-    'images/aerial/Bert-Smith-Subaru-Drone-19.png',
-    'images/aerial/Bert-Smith-Subaru-Drone-13.png',
-    'images/aerial/Bert-Smith-Subaru-Drone-18.png',
+    'images/aerial/Bert-Smith-Subaru-Drone-19.jpg',
+    'images/aerial/Bert-Smith-Subaru-Drone-13.jpg',
+    'images/aerial/Bert-Smith-Subaru-Drone-18.jpg',
     'images/aerial/DJI_0978-Enhanced-NR.jpg',
-    'images/aerial/Bert-Smith-Subaru-Drone-20.png',
-    'images/aerial/Bert-Smith-Subaru-Drone-14.png',
+    'images/aerial/Bert-Smith-Subaru-Drone-20.jpg',
+    'images/aerial/Bert-Smith-Subaru-Drone-14.jpg',
     'images/aerial/DJI_0976-Enhanced-NR.jpg',
-    'images/aerial/Bert-Smith-Subaru-Drone-16.png',
-    'images/aerial/Bert-Smith-Subaru-Drone-12.png'
+    'images/aerial/Bert-Smith-Subaru-Drone-16.jpg',
+    'images/aerial/Bert-Smith-Subaru-Drone-12.jpg'
   ];
 
   function preload() {
