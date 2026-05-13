@@ -1,9 +1,137 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://lfpropertymedia.com/</loc><changefreq>monthly</changefreq><priority>1.0</priority></url>
-  <url><loc>https://lfpropertymedia.com/packages.html</loc><changefreq>monthly</changefreq><priority>0.9</priority></url>
-  <url><loc>https://lfpropertymedia.com/gallery.html</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://lfpropertymedia.com/about.html</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
-  <url><loc>https://lfpropertymedia.com/faq.html</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
-  <url><loc>https://lfpropertymedia.com/contact.html</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemaps-image/1.1">
+
+  <url>
+    <loc>https://lfpropertymedia.org/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>1.0</priority>
+    <image:image>
+      <image:loc>https://lfpropertymedia.org/images/og-image.jpg</image:loc>
+      <image:title>LF Property Media — Sarasota Real Estate Photography</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://lfpropertymedia.org/images/landing-page-house.avif</image:loc>
+      <image:title>Sarasota property hero</image:title>
+    </image:image>
+  </url>
+
+  <url>
+    <loc>https://lfpropertymedia.org/packages.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
+    <loc>https://lfpropertymedia.org/gallery.html</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <image:image>
+      <image:loc>https://lfpropertymedia.org/images/exterior/_DSC0964-twilight.jpg</image:loc>
+      <image:title>Twilight front facade — Sarasota</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://lfpropertymedia.org/images/interior/_DSC1457.jpg</image:loc>
+      <image:title>Open-concept living, dining, and kitchen</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://lfpropertymedia.org/images/exterior/_DSC1542.jpg</image:loc>
+      <image:title>Modern two-story luxury home, Sarasota</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://lfpropertymedia.org/images/exterior/_DSC1496.jpg</image:loc>
+      <image:title>Lakefront lanai with fireplace, Sarasota</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://lfpropertymedia.org/images/aerial/DJI_0030.jpg</image:loc>
+      <image:title>Aerial overview of Sarasota waterway and development</image:title>
+    </image:image>
+  </url>
+
+  <url>
+    <loc>https://lfpropertymedia.org/about.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <image:image>
+      <image:loc>https://lfpropertymedia.org/images/about-portrait.jpg</image:loc>
+      <image:title>Locke, founder of LF Property Media</image:title>
+    </image:image>
+  </url>
+
+  <url>
+    <loc>https://lfpropertymedia.org/faq.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://lfpropertymedia.org/contact.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Service pages -->
+  <url>
+    <loc>https://lfpropertymedia.org/services/real-estate-photography.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://lfpropertymedia.org/services/drone-photography.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://lfpropertymedia.org/services/twilight-photography.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://lfpropertymedia.org/services/3d-tours.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Neighborhood / area pages -->
+  <url>
+    <loc>https://lfpropertymedia.org/areas/sarasota.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://lfpropertymedia.org/areas/siesta-key.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://lfpropertymedia.org/areas/bird-key.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lfpropertymedia.org/areas/lakewood-ranch.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://lfpropertymedia.org/areas/longboat-key.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lfpropertymedia.org/areas/palmer-ranch.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lfpropertymedia.org/areas/venice.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lfpropertymedia.org/areas/osprey.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
 </urlset>

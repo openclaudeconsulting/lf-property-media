@@ -1038,10 +1038,12 @@ details.faq-item .faq-answer {
 }
 .site-footer .footer-grid {
   display: grid;
-  grid-template-columns: 1.4fr 1fr 1fr 1fr;
-  gap: 56px;
+  grid-template-columns: 1.6fr 1fr 1.2fr 1.3fr 1.1fr;
+  gap: 40px;
   margin-bottom: 64px;
 }
+.site-footer h4 { font-size: 0.78rem; }
+.site-footer .footer-grid ul { font-size: 0.88rem; }
 .site-footer h4 {
   color: var(--lf-white);
   font-size: 0.85rem;
