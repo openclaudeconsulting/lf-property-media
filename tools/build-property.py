@@ -627,11 +627,21 @@ def _render_card(listing: dict[str, Any]) -> str:
     state = listing["state"]
     hero_photo = listing.get("hero_photo", "hero.jpg")
     photo_count = sum(len(s["photos"]) for s in listing["sections"])
-    is_sold = listing.get("status") == "sold"
-    badge = (
-        '<span class="badge sold">Sold</span>'
-        if is_sold else ""
-    )
+    status = (listing.get("status") or "active").strip().lower()
+    is_sold = status == "sold"
+    # Status badge map. "sold" also hides the price chip (handled below).
+    # "pending" / "coming-soon" keep the price visible — the property is still
+    # being marketed — but get a distinct badge so the hub reads at a glance.
+    _BADGES = {
+        "sold": ("sold", "Sold"),
+        "pending": ("pending", "Pending"),
+        "coming-soon": ("coming", "Coming Soon"),
+        "coming_soon": ("coming", "Coming Soon"),
+    }
+    badge = ""
+    if status in _BADGES:
+        _cls, _label = _BADGES[status]
+        badge = f'<span class="badge {_cls}">{_label}</span>'
     addr_em = address_with_em(address, listing.get("address_emphasis"))
 
     # Facts strip (price + beds/baths/sqft) — turns each card into an
@@ -651,7 +661,7 @@ def _render_card(listing: dict[str, Any]) -> str:
             specs.append(f"{_fmt_int(facts['sqft_heated'])} sqft")
         price_html = (
             f'<span class="cf-price">{html_lib.escape(facts["list_price_display"])}</span>'
-            if facts.get("list_price_display") else ""
+            if facts.get("list_price_display") and not is_sold else ""
         )
         specs_html = (
             f'<span class="cf-specs">{html_lib.escape(" · ".join(specs))}</span>'

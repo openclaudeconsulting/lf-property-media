@@ -20,6 +20,10 @@ node_modules/
 .env
 .env.local
 
+# Python build artifacts (from tools/)
+__pycache__/
+*.pyc
+
 # Large source files (raw photos / videos) — keep out of git
 *.RAW
 *.CR2
