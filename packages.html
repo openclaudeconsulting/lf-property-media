@@ -159,7 +159,7 @@
           <li>24-hour image &amp; media delivery</li>
           <li>High-res, edited, MLS-ready</li>
         </ul>
-        <a href="contact.html" class="btn btn-secondary">Choose Signature</a>
+        <a href="#build-quote" data-est-pkg="signature" class="btn btn-secondary">Choose Signature</a>
       </article>
 
       <article class="package-card featured reveal reveal-delay-1">
@@ -173,7 +173,7 @@
           <li>50% off virtual tour (add for $100)</li>
           <li>Priority 24-hour turnaround</li>
         </ul>
-        <a href="contact.html" class="btn btn-primary">Choose Premier</a>
+        <a href="#build-quote" data-est-pkg="premier" class="btn btn-primary">Choose Premier</a>
       </article>
 
       <article class="package-card reveal reveal-delay-2">
@@ -187,7 +187,7 @@
           <li>50% off virtual tour (add for $100)</li>
           <li>Priority 24-hour turnaround</li>
         </ul>
-        <a href="contact.html" class="btn btn-secondary">Choose Platinum</a>
+        <a href="#build-quote" data-est-pkg="platinum" class="btn btn-secondary">Choose Platinum</a>
       </article>
     </div>
 
@@ -241,10 +241,320 @@
     </div>
 
     <div class="text-center" style="margin-top:64px;">
-      <a href="contact.html" class="btn btn-primary">Request a Custom Quote</a>
+      <a href="#build-quote" class="btn btn-primary">Build Your Quote</a>
     </div>
   </div>
 </section>
+
+<!-- ============ Instant Quote Estimator ============ -->
+<style>
+.estimator { background: var(--lf-cream); }
+.est-grid { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 48px; align-items: start; }
+.est-panel { background: var(--lf-white); border: 1px solid var(--lf-border); border-radius: var(--radius-md); padding: 36px; }
+.est-group { margin-bottom: 34px; }
+.est-group:last-child { margin-bottom: 0; }
+.est-label { display: block; font-family: var(--font-body); font-size: 0.74rem; letter-spacing: 0.16em; text-transform: uppercase; font-weight: 600; color: var(--lf-ink); margin-bottom: 14px; }
+.est-help { font-size: 0.82rem; color: var(--lf-muted); margin: 10px 0 0; line-height: 1.5; }
+.est-sqft { width: 100%; padding: 15px 16px; font-family: var(--font-body); font-size: 1.05rem; color: var(--lf-ink); background: var(--lf-paper); border: 1px solid var(--lf-border); border-radius: var(--radius-sm); transition: border-color .15s ease; }
+.est-sqft:focus { outline: none; border-color: var(--lf-sand); }
+.est-pkg { display: grid; gap: 10px; }
+.est-opt { display: flex; align-items: center; gap: 14px; padding: 15px 18px; cursor: pointer; border: 1px solid var(--lf-border); border-radius: var(--radius-sm); background: var(--lf-paper); transition: border-color .15s ease, background .15s ease; }
+.est-opt:hover { border-color: var(--lf-sand-light); }
+.est-opt input { position: absolute; opacity: 0; width: 0; height: 0; }
+.est-opt.is-selected { border-color: var(--lf-sand); background: var(--lf-sand-soft); }
+.est-opt:has(input:checked) { border-color: var(--lf-sand); background: var(--lf-sand-soft); }
+.est-opt:has(input:focus-visible) { outline: 2px solid var(--lf-sand); outline-offset: 2px; }
+.est-opt-main { display: flex; flex-direction: column; gap: 3px; flex: 1; }
+.est-opt-name { font-family: var(--font-display); font-size: 1.08rem; color: var(--lf-ink); }
+.est-opt-sub { font-size: 0.8rem; color: var(--lf-muted); }
+.est-opt-price { font-family: var(--font-display); font-size: 1.15rem; color: var(--lf-ink); }
+.est-addons { display: grid; gap: 12px; margin-bottom: 12px; }
+.est-addon { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 14px 18px; border: 1px solid var(--lf-border); border-radius: var(--radius-sm); background: var(--lf-paper); }
+.est-addon-info, .est-toggle-info { display: flex; flex-direction: column; gap: 3px; flex: 1; }
+.est-addon-name { font-size: 0.98rem; color: var(--lf-ink); font-weight: 500; }
+.est-addon-note { font-size: 0.8rem; color: var(--lf-muted); }
+.est-stepper { display: flex; align-items: center; border: 1px solid var(--lf-border); border-radius: var(--radius-sm); overflow: hidden; background: var(--lf-white); }
+.est-step { width: 38px; height: 38px; border: none; background: var(--lf-white); color: var(--lf-ink); font-size: 1.2rem; line-height: 1; cursor: pointer; transition: background .15s ease; }
+.est-step:hover { background: var(--lf-sand-soft); }
+.est-qty { min-width: 34px; text-align: center; font-family: var(--font-body); font-size: 0.98rem; font-weight: 600; color: var(--lf-ink); }
+.est-toggles { display: grid; gap: 10px; }
+.est-toggle { display: flex; align-items: center; gap: 14px; padding: 14px 18px; cursor: pointer; border: 1px solid var(--lf-border); border-radius: var(--radius-sm); background: var(--lf-paper); transition: border-color .15s ease, background .15s ease; }
+.est-toggle:hover { border-color: var(--lf-sand-light); }
+.est-toggle input { width: 18px; height: 18px; accent-color: var(--lf-sand); flex-shrink: 0; }
+.est-toggle.is-selected { border-color: var(--lf-sand); background: var(--lf-sand-soft); }
+.est-toggle:has(input:checked) { border-color: var(--lf-sand); background: var(--lf-sand-soft); }
+.est-toggle-price { font-family: var(--font-display); font-size: 1.05rem; color: var(--lf-ink); }
+.est-checks { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 18px; }
+.est-check { display: flex; align-items: center; gap: 10px; font-size: 0.92rem; color: var(--lf-ink); cursor: pointer; }
+.est-check input { width: 17px; height: 17px; accent-color: var(--lf-sand); }
+.est-summary-inner { position: sticky; top: 100px; background: var(--lf-white); border: 1px solid var(--lf-border); border-radius: var(--radius-md); padding: 32px; }
+.est-lines { margin: 18px 0; display: grid; gap: 12px; min-height: 40px; }
+.est-line { display: flex; justify-content: space-between; gap: 16px; font-size: 0.95rem; color: var(--lf-ink); }
+.est-line span:first-child { color: var(--lf-muted); }
+.est-line.is-fee span:first-child { font-style: italic; }
+.est-empty { font-size: 0.9rem; color: var(--lf-muted); font-style: italic; }
+.est-total-row { display: flex; justify-content: space-between; align-items: baseline; padding-top: 18px; border-top: 1px solid var(--lf-border); }
+.est-total-row > span:first-child { font-size: 0.78rem; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 600; color: var(--lf-muted); }
+.est-total { font-family: var(--font-display); font-size: 2rem; color: var(--lf-ink); }
+.est-quote-note { margin: 14px 0 0; font-size: 0.85rem; color: var(--lf-sand-dark); }
+.est-actions { display: grid; gap: 12px; margin-top: 24px; }
+.est-fine { margin: 18px 0 0; font-size: 0.78rem; color: var(--lf-muted); line-height: 1.5; }
+#est-copy.is-copied { color: var(--lf-sand-dark); border-color: var(--lf-sand); }
+@media (max-width: 860px) {
+  .est-grid { grid-template-columns: 1fr; gap: 32px; }
+  .est-panel { padding: 26px; }
+  .est-summary-inner { position: static; }
+  .est-checks { grid-template-columns: 1fr; }
+}
+</style>
+
+<section class="estimator" id="build-quote" style="scroll-margin-top:90px;">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="kicker">Instant Quote</span>
+      <h2>Build your quote</h2>
+      <p class="lede" style="margin:0 auto;">Pick a package, enter the square footage, add what the property needs. Your estimate updates as you go &mdash; then continue straight to booking.</p>
+    </div>
+
+    <div class="est-grid">
+      <div class="est-panel reveal">
+
+        <div class="est-group">
+          <label class="est-label" for="est-sqft">Square footage</label>
+          <input class="est-sqft" id="est-sqft" type="text" inputmode="numeric" placeholder="e.g. 2,400" autocomplete="off" />
+          <p class="est-help">Base prices cover homes up to 1,600 sq ft. We add $150 per additional 1,000 sq ft (or part of), shown up front.</p>
+        </div>
+
+        <div class="est-group">
+          <span class="est-label">Choose a package</span>
+          <div class="est-pkg">
+            <label class="est-opt">
+              <input type="radio" name="est-package" value="signature" data-price="360" data-name="Signature package" />
+              <span class="est-opt-main"><span class="est-opt-name">Signature</span><span class="est-opt-sub">36 photos &middot; short reel &middot; 2D floor plan</span></span>
+              <span class="est-opt-price">$360</span>
+            </label>
+            <label class="est-opt">
+              <input type="radio" name="est-package" value="premier" data-price="550" data-name="Premier package" />
+              <span class="est-opt-main"><span class="est-opt-name">Premier</span><span class="est-opt-sub">50 photos &middot; creative reel &middot; 50% off virtual tour</span></span>
+              <span class="est-opt-price">$550</span>
+            </label>
+            <label class="est-opt">
+              <input type="radio" name="est-package" value="platinum" data-price="795" data-name="Platinum package" />
+              <span class="est-opt-main"><span class="est-opt-name">Platinum</span><span class="est-opt-sub">72 photos &middot; scripted reel &middot; 2D + 3D floor plan</span></span>
+              <span class="est-opt-price">$795</span>
+            </label>
+            <label class="est-opt">
+              <input type="radio" name="est-package" value="none" data-price="0" data-name="" />
+              <span class="est-opt-main"><span class="est-opt-name">&Agrave; la carte only</span><span class="est-opt-sub">No package &mdash; just the add-ons below</span></span>
+              <span class="est-opt-price">$0</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="est-group">
+          <span class="est-label">Add-ons</span>
+          <div class="est-addons">
+            <div class="est-addon">
+              <div class="est-addon-info"><span class="est-addon-name">Extra photos</span><span class="est-addon-note">$100 per set of 10</span></div>
+              <div class="est-stepper" data-addon="photos" data-qty="0">
+                <button type="button" class="est-step" data-step="-1" aria-label="Fewer photo sets">&minus;</button>
+                <span class="est-qty">0</span>
+                <button type="button" class="est-step" data-step="1" aria-label="More photo sets">+</button>
+              </div>
+            </div>
+            <div class="est-addon">
+              <div class="est-addon-info"><span class="est-addon-name">Extra drone photos</span><span class="est-addon-note">$20 each &middot; $100 per set of 5</span></div>
+              <div class="est-stepper" data-addon="drone" data-qty="0">
+                <button type="button" class="est-step" data-step="-1" aria-label="Fewer drone photos">&minus;</button>
+                <span class="est-qty">0</span>
+                <button type="button" class="est-step" data-step="1" aria-label="More drone photos">+</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="est-toggles">
+            <label class="est-toggle">
+              <input type="checkbox" id="est-reel" data-price="300" data-name="Creative reel" />
+              <span class="est-toggle-info"><span class="est-addon-name">Creative reel</span><span class="est-addon-note">Dynamic short video on pro gear</span></span>
+              <span class="est-toggle-price">$300</span>
+            </label>
+            <label class="est-toggle">
+              <input type="checkbox" id="est-provideo" data-price="425" data-name="Professional video" />
+              <span class="est-toggle-info"><span class="est-addon-name">Professional video</span><span class="est-addon-note">Full walkthrough, realtor mic'd</span></span>
+              <span class="est-toggle-price">$425</span>
+            </label>
+            <label class="est-toggle">
+              <input type="checkbox" id="est-tour" data-price="200" data-name="Virtual tour" />
+              <span class="est-toggle-info"><span class="est-addon-name">Virtual tour</span><span class="est-addon-note">$200 &middot; 50% off with Premier or Platinum</span></span>
+              <span class="est-toggle-price" id="est-tour-price">$200</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="est-group">
+          <span class="est-label">Also interested in <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--lf-muted);">&mdash; we'll quote these for you</span></span>
+          <div class="est-checks">
+            <label class="est-check"><input type="checkbox" class="est-quote" data-name="Listing website" /> <span>Listing website</span></label>
+            <label class="est-check"><input type="checkbox" class="est-quote" data-name="Amenity shots" /> <span>Amenity shots</span></label>
+            <label class="est-check"><input type="checkbox" class="est-quote" data-name="iPhone-style walkthrough" /> <span>iPhone-style walkthrough</span></label>
+            <label class="est-check"><input type="checkbox" class="est-quote" data-name="Twilight shoot" /> <span>Twilight shoot</span></label>
+          </div>
+        </div>
+      </div>
+
+      <aside class="est-summary">
+        <div class="est-summary-inner reveal reveal-delay-1">
+          <span class="kicker">Your Estimate</span>
+          <div id="est-lines" class="est-lines"></div>
+          <div class="est-total-row">
+            <span>Estimated total</span>
+            <span id="est-total" class="est-total">$0</span>
+          </div>
+          <p id="est-quote-note" class="est-quote-note" hidden></p>
+          <div class="est-actions">
+            <a id="est-book" href="https://lfpropertymedia.hbportal.co/public/69d7d49cbb02a4004289efdb/1-Information_and_Services" target="_blank" rel="noopener" class="btn btn-primary" style="width:100%;text-align:center;">Continue to booking &#8599;</a>
+            <button type="button" id="est-copy" class="btn btn-secondary" style="width:100%;">Copy quote summary</button>
+          </div>
+          <p class="est-fine">Estimate only &mdash; your final quote is confirmed within 24 hours, after the exact square-footage measurement. Square-footage fees are always shown up front, never hidden.</p>
+        </div>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<script>
+(function () {
+  var HB_URL = 'https://lfpropertymedia.hbportal.co/public/69d7d49cbb02a4004289efdb/1-Information_and_Services';
+  var sqftEl = document.getElementById('est-sqft');
+  var linesEl = document.getElementById('est-lines');
+  var totalEl = document.getElementById('est-total');
+  var quoteNoteEl = document.getElementById('est-quote-note');
+  var tourPriceEl = document.getElementById('est-tour-price');
+  var copyBtn = document.getElementById('est-copy');
+  if (!linesEl) return;
+
+  function money(n) { return '$' + n.toLocaleString('en-US'); }
+  function dronePrice(n) { return Math.floor(n / 5) * 100 + (n % 5) * 20; }
+  function qty(addon) {
+    var el = document.querySelector('.est-stepper[data-addon="' + addon + '"]');
+    return el ? (parseInt(el.dataset.qty, 10) || 0) : 0;
+  }
+
+  function state() {
+    var pkg = document.querySelector('input[name="est-package"]:checked');
+    var digits = (sqftEl.value || '').replace(/[^0-9]/g, '');
+    return {
+      pkgKey: pkg ? pkg.value : null,
+      pkgName: pkg ? pkg.dataset.name : '',
+      pkgPrice: pkg ? Number(pkg.dataset.price) : 0,
+      sqft: digits ? parseInt(digits, 10) : 0,
+      photos: qty('photos'),
+      drone: qty('drone'),
+      reel: document.getElementById('est-reel').checked,
+      provideo: document.getElementById('est-provideo').checked,
+      tour: document.getElementById('est-tour').checked,
+      quotes: Array.prototype.map.call(document.querySelectorAll('.est-quote:checked'), function (c) { return c.dataset.name; })
+    };
+  }
+
+  function lines(s) {
+    var out = [];
+    if (s.pkgKey && s.pkgKey !== 'none') out.push({ label: s.pkgName, amount: s.pkgPrice });
+    if (s.sqft > 1600) {
+      out.push({ label: 'Square-footage adjustment (' + s.sqft.toLocaleString('en-US') + ' sq ft)', amount: Math.ceil((s.sqft - 1600) / 1000) * 150, fee: true });
+    }
+    if (s.photos > 0) out.push({ label: 'Extra photos — ' + s.photos + ' set' + (s.photos > 1 ? 's' : '') + ' of 10', amount: s.photos * 100 });
+    if (s.drone > 0) out.push({ label: 'Extra drone photos — ' + s.drone, amount: dronePrice(s.drone) });
+    if (s.reel) out.push({ label: 'Creative reel', amount: 300 });
+    if (s.provideo) out.push({ label: 'Professional video', amount: 425 });
+    if (s.tour) {
+      var disc = (s.pkgKey === 'premier' || s.pkgKey === 'platinum');
+      out.push({ label: 'Virtual tour' + (disc ? ' (50% off)' : ''), amount: disc ? 100 : 200 });
+    }
+    return out;
+  }
+
+  function render() {
+    var s = state();
+    document.querySelectorAll('.est-opt, .est-toggle').forEach(function (o) {
+      o.classList.toggle('is-selected', !!o.querySelector('input:checked'));
+    });
+    if (tourPriceEl) tourPriceEl.textContent = (s.pkgKey === 'premier' || s.pkgKey === 'platinum') ? '$100' : '$200';
+    var ls = lines(s);
+    var total = ls.reduce(function (t, l) { return t + l.amount; }, 0);
+    linesEl.innerHTML = ls.length
+      ? ls.map(function (l) { return '<div class="est-line' + (l.fee ? ' is-fee' : '') + '"><span>' + l.label + '</span><span>' + money(l.amount) + '</span></div>'; }).join('')
+      : '<div class="est-empty">Pick a package or add-ons to see your estimate.</div>';
+    totalEl.textContent = money(total);
+    if (s.quotes.length) { quoteNoteEl.hidden = false; quoteNoteEl.textContent = 'Plus, quoted separately: ' + s.quotes.join(', ') + '.'; }
+    else { quoteNoteEl.hidden = true; }
+  }
+
+  function summaryText() {
+    var s = state();
+    var ls = lines(s);
+    var total = ls.reduce(function (t, l) { return t + l.amount; }, 0);
+    var L = ['LF Property Media — Quote Estimate'];
+    if (s.sqft) L.push('Property: ' + s.sqft.toLocaleString('en-US') + ' sq ft');
+    L.push('');
+    if (!ls.length) L.push('(no items selected yet)');
+    else ls.forEach(function (l) { L.push('• ' + l.label + ' — ' + money(l.amount)); });
+    L.push('');
+    L.push('Estimated total: ' + money(total));
+    if (s.quotes.length) { L.push(''); L.push("Also requested (we'll quote): " + s.quotes.join(', ')); }
+    L.push('');
+    L.push('Estimate only — final quote confirmed within 24 hours.');
+    L.push('Book: ' + HB_URL);
+    return L.join('\n');
+  }
+
+  document.querySelectorAll('.est-stepper').forEach(function (st) {
+    st.addEventListener('click', function (e) {
+      var btn = e.target.closest('.est-step');
+      if (!btn) return;
+      var cur = Math.max(0, (parseInt(st.dataset.qty, 10) || 0) + parseInt(btn.dataset.step, 10));
+      st.dataset.qty = cur;
+      st.querySelector('.est-qty').textContent = cur;
+      render();
+    });
+  });
+
+  sqftEl.addEventListener('input', render);
+  document.querySelectorAll('input[name="est-package"], #est-reel, #est-provideo, #est-tour, .est-quote').forEach(function (el) {
+    el.addEventListener('change', render);
+  });
+
+  document.querySelectorAll('[data-est-pkg]').forEach(function (link) {
+    link.addEventListener('click', function () {
+      var radio = document.querySelector('input[name="est-package"][value="' + link.getAttribute('data-est-pkg') + '"]');
+      if (radio) { radio.checked = true; render(); }
+    });
+  });
+
+  copyBtn.addEventListener('click', function () {
+    var text = summaryText();
+    var done = function () {
+      var orig = 'Copy quote summary';
+      copyBtn.classList.add('is-copied');
+      copyBtn.textContent = 'Copied ✓';
+      setTimeout(function () { copyBtn.textContent = orig; copyBtn.classList.remove('is-copied'); }, 1800);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, function () { fallbackCopy(text); done(); });
+    } else { fallbackCopy(text); done(); }
+  });
+
+  function fallbackCopy(text) {
+    var ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+
+  render();
+})();
+</script>
 
 <section class="bg-cream">
   <div class="container-narrow">
