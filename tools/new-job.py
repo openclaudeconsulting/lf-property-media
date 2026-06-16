@@ -7,10 +7,12 @@ never has to hand-build folders again.
 
 Structure produced (under --base, default = $LF_JOBS_BASE or your home folder):
 
-    <base>/Real Estate/<Realtor Name>/<Address>/<Month-Day>/   (raw capture)
+    <base>/Real Estate/<Realtor Name>/<Month-Day> <Address>/   (raw capture)
         Photos/  Drone/  360/  Video/
-    <base>/Final/<Realtor Name>/<Address>/<Month-Day>/         (edited output)
+    <base>/Final/<Realtor Name>/<Month-Day> <Address>/         (edited output)
         Home/  Aerial/  Amenities/  Video/  360/  Floorplan/
+
+Each shoot is one folder named "<Month-Day> <Address>", e.g. "06-27 2719 Fort Worth".
 
 The "Final" sub-folders mirror the Pixieset galleries (Home / Aerial / Amenities)
 plus a home for the video, 360s, and the 2D floor plan.
@@ -98,9 +100,10 @@ def build_job(base: Path, realtor: str, address: str, shoot: date,
     r = realtor_folder(realtor)
     a = address_folder(address, words)
     d = shoot.strftime(DATE_FMT)
+    job = f"{d} {a}"  # one folder per shoot: date + address, e.g. "06-27 2719 Fort Worth"
 
-    raw_root = base / RAW_PARENT / r / a / d
-    final_root = base / FINAL_PARENT / r / a / d
+    raw_root = base / RAW_PARENT / r / job
+    final_root = base / FINAL_PARENT / r / job
 
     targets = [raw_root / sub for sub in RAW_SUBFOLDERS]
     targets += [final_root / sub for sub in FINAL_SUBFOLDERS]
@@ -116,10 +119,10 @@ def build_job(base: Path, realtor: str, address: str, shoot: date,
 
 
 def print_tree(raw_root: Path, final_root: Path) -> None:
-    print(f"\n  {RAW_PARENT}/{raw_root.parent.parent.name}/{raw_root.parent.name}/{raw_root.name}/")
+    print(f"\n  {RAW_PARENT}/{raw_root.parent.name}/{raw_root.name}/")
     for sub in RAW_SUBFOLDERS:
         print(f"      {sub}/")
-    print(f"  {FINAL_PARENT}/{final_root.parent.parent.name}/{final_root.parent.name}/{final_root.name}/")
+    print(f"  {FINAL_PARENT}/{final_root.parent.name}/{final_root.name}/")
     for sub in FINAL_SUBFOLDERS:
         print(f"      {sub}/")
 
