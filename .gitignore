@@ -20,6 +20,14 @@ node_modules/
 .env
 .env.local
 
+# Discord bot secrets + runtime files (live in repo root, never commit)
+.discord_bot.env
+.anthropic_api_key
+.bot.heartbeat
+.supervisor.heartbeat
+.supervisor.lock
+bot.log
+
 # Python build artifacts (from tools/)
 __pycache__/
 *.pyc

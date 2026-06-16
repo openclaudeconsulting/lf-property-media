@@ -1,0 +1,7 @@
+# LF Property Media Discord bot dependencies.
+# Install with:  pip install -r bot/requirements.txt
+discord.py>=2.4
+anthropic>=0.69
+# Pillow is used by build-property.py / hero resizing (already needed by the
+# property tooling); listed here so a fresh machine running the bot has it.
+Pillow>=10.0
