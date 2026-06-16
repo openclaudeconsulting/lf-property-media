@@ -91,6 +91,13 @@ Locke is based in Nokomis, FL and travels up to 90 minutes in any direction for 
 
 [Full areas hub](https://lfpropertymedia.org/areas/)
 
+## Property Tours (Live Portfolio)
+
+Every property LF has photographed gets its own shareable tour page with hero, 8-section masonry collage, and fullscreen lightbox. Agents can share the link directly with buyers — no login, no friction.
+
+- [Browse all property tours](https://lfpropertymedia.org/properties/)
+- [2719 Fort Worth Street, Sarasota](https://lfpropertymedia.org/properties/2719-fort-worth-street/) — mid-century coastal home, 49 photographs
+
 ## Credentials & Equipment
 
 - **FAA Part 107** Remote Pilot Certificate (commercial drone operations)

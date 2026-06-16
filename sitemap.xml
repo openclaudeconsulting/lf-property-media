@@ -204,6 +204,13 @@
     <priority>0.5</priority>
   </url>
 
+  <!-- Property tours hub -->
+  <url>
+    <loc>https://lfpropertymedia.org/properties/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
   <!-- Property listing tours -->
   <url>
     <loc>https://lfpropertymedia.org/properties/2719-fort-worth-street/</loc>

@@ -31,6 +31,7 @@ from typing import Any
 ROOT = Path(__file__).parent.parent
 PROPERTIES_DIR = ROOT / "properties"
 TEMPLATE_PATH = ROOT / "tools" / "templates" / "property-page.html"
+HUB_TEMPLATE_PATH = ROOT / "tools" / "templates" / "properties-hub.html"
 SITE_URL = "https://lfpropertymedia.org"
 
 
@@ -165,15 +166,126 @@ def build_all() -> None:
         print("No properties with listing.json found in properties/")
 
 
+# ============================================================
+#  HUB PAGE — /properties/index.html
+# ============================================================
+
+def _load_published_listings() -> list[dict[str, Any]]:
+    """Return all listing.json contents that should appear on the hub.
+
+    Skipped:
+      - unlisted: true   (private share link only)
+      - status: "draft"  (not ready for public)
+    Sort: by date_published descending if present, else slug ascending.
+    """
+    out = []
+    for prop_dir in PROPERTIES_DIR.iterdir():
+        if not prop_dir.is_dir():
+            continue
+        listing_path = prop_dir / "listing.json"
+        if not listing_path.exists():
+            continue
+        data = json.loads(listing_path.read_text(encoding="utf-8"))
+        if data.get("unlisted"):
+            continue
+        if data.get("status") == "draft":
+            continue
+        data["_slug"] = data.get("slug", prop_dir.name)
+        out.append(data)
+    out.sort(
+        key=lambda d: (
+            -1 if d.get("date_published") else 0,
+            d.get("date_published", "") or "",
+            d["_slug"],
+        ),
+        reverse=True,
+    )
+    return out
+
+
+def _render_card(listing: dict[str, Any]) -> str:
+    slug = listing["_slug"]
+    address = listing["address"]
+    city = listing["city"]
+    state = listing["state"]
+    hero_photo = listing.get("hero_photo", "hero.jpg")
+    photo_count = sum(len(s["photos"]) for s in listing["sections"])
+    is_sold = listing.get("status") == "sold"
+    badge = (
+        '<span class="badge sold">Sold</span>'
+        if is_sold else ""
+    )
+    addr_em = address_with_em(address, listing.get("address_emphasis"))
+    return f"""    <a class="card" href="/properties/{slug}/" aria-label="{html_lib.escape(address)} listing tour">
+      <div class="card-img">
+        {badge}
+        <img src="/properties/{slug}/media/{hero_photo}" alt="{html_lib.escape(address)}, {html_lib.escape(city)} — listing tour hero" loading="lazy" />
+      </div>
+      <div class="card-body">
+        <h3 class="card-addr">{addr_em}</h3>
+        <div class="card-meta">
+          <span>{html_lib.escape(city)}, {html_lib.escape(state)}</span>
+          <span class="pip"></span>
+          <span>{photo_count} photos</span>
+        </div>
+        <span class="card-cta">View Tour <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
+      </div>
+    </a>"""
+
+
+def build_hub() -> None:
+    listings = _load_published_listings()
+    template = HUB_TEMPLATE_PATH.read_text(encoding="utf-8")
+
+    if not listings:
+        cards_html = (
+            '    <div class="empty" style="grid-column:1/-1;">'
+            '<h3>No public tours yet.</h3>'
+            '<p>New listings will appear here as we publish them.</p>'
+            '</div>'
+        )
+    else:
+        cards_html = "\n".join(_render_card(l) for l in listings)
+
+    total_count = len(listings)
+    total_photos = sum(
+        sum(len(s["photos"]) for s in l["sections"])
+        for l in listings
+    )
+
+    replacements = {
+        "{{cards_html}}": cards_html,
+        "{{total_count}}": str(total_count),
+        "{{total_photos}}": str(total_photos),
+    }
+    html = template
+    for placeholder, value in replacements.items():
+        html = html.replace(placeholder, value)
+
+    out = PROPERTIES_DIR / "index.html"
+    out.write_text(html, encoding="utf-8")
+    print(
+        f"Built hub: {total_count} public tour(s), {total_photos} total photos -> {out}"
+    )
+
+
 def main(argv: list[str]) -> int:
     if not argv:
         print(__doc__)
         return 1
+    if "--hub" in argv:
+        build_hub()
+        argv = [a for a in argv if a != "--hub"]
+        if not argv:
+            return 0
     if "--all" in argv:
         build_all()
+        build_hub()
         return 0
     for slug in argv:
         build(slug)
+    # Always refresh the hub after building any property so cards stay in sync.
+    build_hub()
     return 0
 
 
