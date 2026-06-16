@@ -89,6 +89,289 @@ def address_with_em(address: str, emphasis: str | None) -> str:
     return f"{before}<em>{em_part}</em>{after}"
 
 
+def _fmt_int(n: Any) -> str:
+    """Thousands-separated int, tolerant of strings/floats."""
+    try:
+        return f"{int(n):,}"
+    except (TypeError, ValueError):
+        return str(n)
+
+
+def _join(v: Any) -> str:
+    """Render a value: lists become ' · '-joined, scalars stringified."""
+    if isinstance(v, list):
+        return " · ".join(str(x) for x in v)
+    return str(v)
+
+
+def _copy_text(facts: dict[str, Any], address: str, city: str, state: str, zip_code: str) -> str:
+    """A compact, paste-ready MLS summary an agent can drop into a text/email."""
+    f = facts
+    lines = [f"{address}, {city}, {state} {zip_code}".strip()]
+    head = []
+    if f.get("list_price_display"): head.append(f["list_price_display"])
+    if f.get("mls_number"): head.append(f"MLS {f['mls_number']}")
+    if f.get("data_source"): head[-1] = head[-1] + f" ({f['data_source']})"
+    if f.get("status"): head.append(f["status"])
+    if head: lines.append(" · ".join(head))
+    specs = []
+    if f.get("beds") is not None: specs.append(f"{f['beds']} bd")
+    if f.get("baths_display"): specs.append(f"{f['baths_display']} ba")
+    if f.get("sqft_heated"):
+        s = f"{_fmt_int(f['sqft_heated'])} sqft heated"
+        if f.get("sqft_total_under_roof"):
+            s += f" ({_fmt_int(f['sqft_total_under_roof'])} under roof)"
+        specs.append(s)
+    if f.get("price_per_sqft_heated"): specs.append(f"~${f['price_per_sqft_heated']}/sqft")
+    if specs: lines.append(" · ".join(specs))
+    lot = []
+    if f.get("lot_sqft"):
+        l = f"Lot {_fmt_int(f['lot_sqft'])} sqft"
+        if f.get("lot_acres"): l += f" ({f['lot_acres']} ac)"
+        lot.append(l)
+    if f.get("year_built"): lot.append(f"Built {f['year_built']}")
+    if f.get("architectural_style"): lot.append(f["architectural_style"])
+    if lot: lines.append(" · ".join(lot))
+    fin = []
+    if f.get("annual_taxes_display"):
+        t = f"Taxes {f['annual_taxes_display']}"
+        if f.get("tax_year"): t += f" ({f['tax_year']})"
+        fin.append(t)
+    if f.get("hoa") is False: fin.append("No HOA")
+    if f.get("cdd") is False: fin.append("No CDD")
+    if f.get("ownership"): fin.append(f["ownership"])
+    if fin: lines.append(" · ".join(fin))
+    if f.get("pool"): lines.append(f"Pool: {f['pool']}")
+    if f.get("virtual_tour_url"): lines.append(f"Virtual tour: {f['virtual_tour_url']}")
+    return "\n".join(lines)
+
+
+def render_facts_panel(
+    facts: dict[str, Any] | None,
+    address: str,
+    city: str,
+    state: str,
+    zip_code: str,
+) -> str:
+    """Build the agent-facing 'Property Facts' data-sheet section from facts.
+
+    Returns '' when a listing has no facts block, so the template stays
+    backward-compatible with photo-only tours.
+    """
+    if not facts:
+        return ""
+    f = facts
+    esc = html_lib.escape
+
+    def yn(key: str) -> str | None:
+        return ("Yes" if f[key] else "No") if key in f else None
+
+    # ---- headline stat row (the six numbers agents quote on the phone) ----
+    stats: list[tuple[str, str, str]] = []
+    if f.get("list_price_display"):
+        sub = f"${f['price_per_sqft_heated']} / sq ft" if f.get("price_per_sqft_heated") else ""
+        stats.append((f["list_price_display"], "List Price", sub))
+    if f.get("beds") is not None:
+        stats.append((str(f["beds"]), "Bedrooms", f.get("beds_note", "")))
+    if f.get("baths_display"):
+        sub = ""
+        if f.get("baths_full") is not None and f.get("baths_half") is not None:
+            sub = f"{f['baths_full']} full · {f['baths_half']} half"
+        stats.append((f["baths_display"], "Bathrooms", sub))
+    if f.get("sqft_heated"):
+        sub = f"{_fmt_int(f['sqft_total_under_roof'])} under roof" if f.get("sqft_total_under_roof") else ""
+        stats.append((_fmt_int(f["sqft_heated"]), "Heated Sq Ft", sub))
+    if f.get("lot_acres") or f.get("lot_sqft"):
+        val = f"{f['lot_acres']} ac" if f.get("lot_acres") else f"{_fmt_int(f['lot_sqft'])} sf"
+        sub = f"{_fmt_int(f['lot_sqft'])} sq ft" if f.get("lot_sqft") else ""
+        stats.append((val, "Lot Size", sub))
+    if f.get("year_built"):
+        stats.append((str(f["year_built"]), "Year Built", f.get("architectural_style", "")))
+
+    stat_html = "\n".join(
+        f'        <div class="fstat"><span class="v">{esc(str(v))}</span>'
+        f'<span class="l">{esc(lbl)}</span>'
+        + (f'<span class="sub">{esc(str(s))}</span>' if s else "")
+        + "</div>"
+        for v, lbl, s in stats
+    )
+
+    # ---- grouped spec tables ----
+    def row(k: str, v: Any) -> tuple[str, str] | None:
+        if v is None or v == "" or v == []:
+            return None
+        return (k, _join(v))
+
+    garage = None
+    if f.get("garage_spaces"):
+        garage = f"{f['garage_spaces']}-car" + (" attached" if f.get("garage_attached") else "")
+    ppsf = None
+    if f.get("price_per_sqft_heated"):
+        ppsf = f"${f['price_per_sqft_heated']}/sf heated"
+        if f.get("price_per_sqft_total"):
+            ppsf += f" · ${f['price_per_sqft_total']}/sf total"
+    taxes = f.get("annual_taxes_display")
+    if taxes and f.get("tax_year"):
+        taxes = f"{taxes} ({f['tax_year']})"
+    lot = None
+    if f.get("lot_sqft"):
+        lot = f"{_fmt_int(f['lot_sqft'])} sq ft"
+        if f.get("lot_acres"):
+            lot += f" · {f['lot_acres']} ac"
+
+    groups: list[tuple[str, list[tuple[str, str] | None]]] = [
+        ("Overview", [
+            row("Status", f.get("status")),
+            row("Property type", f.get("property_type")),
+            row("Style", f.get("architectural_style")),
+            row("Levels", f.get("levels")),
+            row("Stories", f.get("stories")),
+            row("Total rooms", f.get("total_rooms")),
+            row("Days on market", f.get("days_on_market")),
+            row("Listed", f.get("list_date_display")),
+            row("MLS #", f.get("mls_number")),
+        ]),
+        ("Interior", [
+            row("Bedrooms", f.get("beds")),
+            row("Bathrooms", f.get("baths_display")),
+            row("Flooring", f.get("flooring")),
+            row("Fireplace", f.get("fireplace")),
+            row("Appliances", f.get("appliances")),
+            row("Laundry", f.get("laundry")),
+            row("Furnished", f.get("furnished")),
+            row("Features", f.get("interior_features")),
+        ]),
+        ("Systems & Construction", [
+            row("Heating", f.get("heating")),
+            row("Cooling", f.get("cooling")),
+            row("Roof", f.get("roof")),
+            row("Construction", f.get("construction")),
+            row("Foundation", f.get("foundation")),
+            row("Sewer", f.get("sewer")),
+            row("Water", f.get("water_source")),
+            row("Utilities", f.get("utilities")),
+        ]),
+        ("Exterior & Outdoor", [
+            row("Pool", f.get("pool")),
+            row("Spa", f.get("spa")),
+            row("Garage", garage),
+            row("Carport", yn("carport")),
+            row("Patio / porch", f.get("patio_porch")),
+            row("Exterior", f.get("exterior_features")),
+            row("Waterfront", yn("waterfront")),
+            row("Water view", yn("water_view")),
+        ]),
+        ("Financial", [
+            row("List price", f.get("list_price_display")),
+            row("Price / sq ft", ppsf),
+            row("Annual taxes", taxes),
+            row("HOA", "None" if f.get("hoa") is False else f.get("hoa")),
+            row("CDD", "None" if f.get("cdd") is False else f.get("cdd")),
+            row("Ownership", f.get("ownership")),
+            row("Terms", f.get("listing_terms")),
+        ]),
+        ("Location & Legal", [
+            row("County", f.get("county")),
+            row("Subdivision", f.get("subdivision")),
+            row("MLS area", f.get("mls_area")),
+            row("Zoning", f.get("zoning")),
+            row("Flood zone", f.get("flood_zone")),
+            row("Facing", f.get("facing_direction")),
+            row("Lot size", lot),
+            row("Lot dimensions", f.get("lot_dimensions")),
+            row("Parcel / legal", f.get("parcel_legal")),
+        ]),
+    ]
+
+    groups_html = ""
+    for title, rows in groups:
+        clean = [r for r in rows if r]
+        if not clean:
+            continue
+        inner = "\n".join(
+            f'          <div class="frow"><span class="k">{esc(k)}</span>'
+            f'<span class="v">{esc(str(v))}</span></div>'
+            for k, v in clean
+        )
+        groups_html += (
+            f'        <div class="fgroup">\n'
+            f'          <h3>{esc(title)}</h3>\n{inner}\n'
+            f'        </div>\n'
+        )
+
+    # ---- recent-updates timeline ----
+    updates_html = ""
+    updates = f.get("updates") or []
+    if updates:
+        items = "\n".join(
+            f'          <div class="fupd"><span class="yr">{esc(str(u.get("year", "")))}</span>'
+            f'<span class="it">{esc(str(u.get("item", "")))}</span></div>'
+            for u in updates
+        )
+        updates_html = (
+            '      <div class="fupdates">\n'
+            '        <h3 class="fgroup-h">Recent Updates</h3>\n'
+            f'        <div class="fupdates-list">\n{items}\n        </div>\n'
+            '      </div>\n'
+        )
+
+    # ---- actions: virtual tour, copy, print + source line ----
+    actions = []
+    if f.get("virtual_tour_url"):
+        actions.append(
+            f'        <a class="fbtn sand" href="{esc(f["virtual_tour_url"])}" target="_blank" rel="noopener">'
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">'
+            '<path d="M23 7l-7 5 7 5V7zM1 5h15v14H1z"/></svg>'
+            '<span class="lbl">3D Virtual Tour</span></a>'
+        )
+    copy_data = esc(_copy_text(f, address, city, state, zip_code), quote=True).replace("\n", "&#10;")
+    actions.append(
+        f'        <button class="fbtn" id="copyFacts" type="button" data-copy="{copy_data}">'
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">'
+        '<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>'
+        '<span class="lbl">Copy MLS Facts</span></button>'
+    )
+    actions.append(
+        '        <button class="fbtn" id="printFacts" type="button">'
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">'
+        '<path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z"/></svg>'
+        '<span class="lbl">Print Sheet</span></button>'
+    )
+    source_bits = []
+    if f.get("mls_number"):
+        source_bits.append(f"MLS {esc(f['mls_number'])}")
+    if f.get("data_source"):
+        source_bits.append(esc(f["data_source"]))
+    if f.get("listing_office"):
+        source_bits.append("Listed by " + esc(f["listing_office"]))
+    source_line = ""
+    if source_bits:
+        source_line = f'        <span class="fsource">{" · ".join(source_bits)}</span>'
+
+    disclaimer = ""
+    if f.get("disclaimer"):
+        disclaimer = f'      <p class="fdisc">{esc(f["disclaimer"])}</p>\n'
+
+    return (
+        '      <section class="section facts" id="facts">\n'
+        '        <div class="sec-head">\n'
+        '          <div class="l"><span class="sec-num">00</span>'
+        '<h2 class="sec-title">Property Info</h2>'
+        '<span class="sec-sub">The full listing data sheet</span></div>\n'
+        f'          <span class="sec-count">{esc(f.get("mls_number", "Listing Data"))}</span>\n'
+        '        </div>\n'
+        f'        <div class="facts-stats">\n{stat_html}\n        </div>\n'
+        f'        <div class="facts-grid">\n{groups_html}        </div>\n'
+        f'{updates_html}'
+        '        <div class="facts-actions">\n'
+        + "\n".join(actions) + "\n"
+        + (source_line + "\n" if source_line else "")
+        + '        </div>\n'
+        f'{disclaimer}'
+        '      </section>'
+    )
+
+
 def build(slug: str) -> None:
     prop_dir = PROPERTIES_DIR / slug
     listing_path = prop_dir / "listing.json"
@@ -153,6 +436,9 @@ def build(slug: str) -> None:
         "{{hero_alt}}": html_lib.escape(hero_alt),
         "{{footer_address_line}}": html_lib.escape(footer_address_line),
         "{{tour_data}}": render_tour_js(sections),
+        "{{facts_panel}}": render_facts_panel(
+            listing.get("facts"), address, city, state, zip_code
+        ),
     }
 
     html = template
@@ -341,15 +627,52 @@ def _render_card(listing: dict[str, Any]) -> str:
     state = listing["state"]
     hero_photo = listing.get("hero_photo", "hero.jpg")
     photo_count = sum(len(s["photos"]) for s in listing["sections"])
-    is_sold = listing.get("status") == "sold"
-    badge = (
-        '<span class="badge sold">Sold</span>'
-        if is_sold else ""
-    )
+    status = (listing.get("status") or "active").strip().lower()
+    is_sold = status == "sold"
+    # Status badge map. "sold" also hides the price chip (handled below).
+    # "pending" / "coming-soon" keep the price visible — the property is still
+    # being marketed — but get a distinct badge so the hub reads at a glance.
+    _BADGES = {
+        "sold": ("sold", "Sold"),
+        "pending": ("pending", "Pending"),
+        "coming-soon": ("coming", "Coming Soon"),
+        "coming_soon": ("coming", "Coming Soon"),
+    }
+    badge = ""
+    if status in _BADGES:
+        _cls, _label = _BADGES[status]
+        badge = f'<span class="badge {_cls}">{_label}</span>'
     addr_em = address_with_em(address, listing.get("address_emphasis"))
+
+    # Facts strip (price + beds/baths/sqft) — turns each card into an
+    # MLS-style search result. Rendered only when a listing has facts.
+    facts = listing.get("facts") or {}
+    facts_row = ""
+    price_chip = ""
+    if facts:
+        if facts.get("list_price_display") and not is_sold:
+            price_chip = f'<span class="price-chip">{html_lib.escape(facts["list_price_display"])}</span>'
+        specs = []
+        if facts.get("beds") is not None:
+            specs.append(f"{facts['beds']} bd")
+        if facts.get("baths_display"):
+            specs.append(f"{facts['baths_display']} ba")
+        if facts.get("sqft_heated"):
+            specs.append(f"{_fmt_int(facts['sqft_heated'])} sqft")
+        price_html = (
+            f'<span class="cf-price">{html_lib.escape(facts["list_price_display"])}</span>'
+            if facts.get("list_price_display") and not is_sold else ""
+        )
+        specs_html = (
+            f'<span class="cf-specs">{html_lib.escape(" · ".join(specs))}</span>'
+            if specs else ""
+        )
+        if price_html or specs_html:
+            facts_row = f'\n        <div class="card-facts">{price_html}{specs_html}</div>'
+
     return f"""    <a class="card" href="/properties/{slug}/" aria-label="{html_lib.escape(address)} listing tour">
       <div class="card-img">
-        {badge}
+        {badge}{price_chip}
         <img src="/properties/{slug}/media/{hero_photo}" alt="{html_lib.escape(address)}, {html_lib.escape(city)} — listing tour hero" loading="lazy" />
       </div>
       <div class="card-body">
@@ -358,7 +681,7 @@ def _render_card(listing: dict[str, Any]) -> str:
           <span>{html_lib.escape(city)}, {html_lib.escape(state)}</span>
           <span class="pip"></span>
           <span>{photo_count} photos</span>
-        </div>
+        </div>{facts_row}
         <span class="card-cta">View Tour <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
       </div>
     </a>"""

@@ -179,6 +179,54 @@
     .scroll-cue { animation: none; }
   }
 
+  /* ============ FACTS PANEL (MLS data sheet) ============ */
+  .facts-stats {
+    display: grid; grid-template-columns: repeat(6, 1fr);
+    gap: 1px; background: var(--border);
+    border: 1px solid var(--border); border-radius: 7px; overflow: hidden;
+    margin-bottom: 42px;
+  }
+  @media (max-width: 1000px) { .facts-stats { grid-template-columns: repeat(3, 1fr); } }
+  @media (max-width: 560px)  { .facts-stats { grid-template-columns: repeat(2, 1fr); } }
+  .fstat { background: var(--white); padding: 22px 20px; display: flex; flex-direction: column; }
+  .fstat .v { font-family: var(--serif); font-weight: 500; font-size: clamp(23px, 2.8vw, 31px); line-height: 1; color: var(--ink); letter-spacing: -0.01em; }
+  .fstat .l { font-size: 10.5px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--faint); margin-top: 11px; font-weight: 600; }
+  .fstat .sub { font-size: 12px; color: var(--muted); margin-top: 5px; line-height: 1.35; }
+
+  .facts-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px 48px; }
+  @media (max-width: 1000px) { .facts-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 620px)  { .facts-grid { grid-template-columns: 1fr; } }
+  .fgroup { break-inside: avoid; padding-bottom: 6px; }
+  .fgroup h3, .fgroup-h {
+    font-family: var(--sans); font-size: 11.5px; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--sand); font-weight: 700;
+    padding-bottom: 12px; margin-bottom: 4px; border-bottom: 1px solid var(--border);
+  }
+  .frow { display: flex; justify-content: space-between; gap: 18px; padding: 9px 0; border-bottom: 1px solid var(--border); font-size: 13.5px; line-height: 1.45; }
+  .frow:last-child { border-bottom: 0; }
+  .frow .k { color: var(--muted); flex-shrink: 0; }
+  .frow .v { color: var(--ink-soft); text-align: right; font-weight: 500; }
+
+  .fupdates { margin-top: 46px; }
+  .fupdates-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 2px 28px; margin-top: 16px; }
+  .fupd { display: flex; align-items: baseline; gap: 13px; font-size: 13.5px; padding: 9px 0; border-bottom: 1px solid var(--border); }
+  .fupd .yr { font-family: var(--serif); color: var(--sand); font-size: 16px; min-width: 58px; font-variant-numeric: tabular-nums; }
+  .fupd .it { color: var(--ink-soft); }
+
+  .facts-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin-top: 44px; padding-top: 30px; border-top: 1px solid var(--border); }
+  .fbtn {
+    display: inline-flex; align-items: center; gap: 9px; cursor: pointer;
+    font-family: var(--sans); font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 12px 20px; border-radius: 100px; border: 1px solid var(--ink); background: transparent; color: var(--ink);
+    transition: background .2s ease, color .2s ease, border-color .2s ease;
+  }
+  .fbtn:hover { background: var(--ink); color: var(--white); }
+  .fbtn svg { width: 15px; height: 15px; }
+  .fbtn.sand { background: var(--sand); border-color: var(--sand); color: var(--white); }
+  .fbtn.sand:hover { background: var(--sand-dark); border-color: var(--sand-dark); }
+  .fsource { margin-left: auto; font-size: 11.5px; color: var(--faint); letter-spacing: 0.04em; text-align: right; }
+  .fdisc { font-size: 11px; color: var(--faint); line-height: 1.7; margin-top: 20px; max-width: 78ch; }
+
   /* ============ FOOTER ============ */
   .foot { background: var(--ink); color: rgba(255,255,255,0.72); margin-top: 80px; padding: 76px 44px 36px; }
   .foot-inner { max-width: 1500px; margin: 0 auto; }
@@ -215,6 +263,17 @@
     .foot { padding: 56px 22px 30px; } .foot-contact { text-align: left; }
     .lb-nav { width: 44px; height: 44px; } .lb-prev { left: 10px; } .lb-next { right: 10px; }
     .lb-img { max-width: 94vw; }
+  }
+
+  /* ============ PRINT — facts data sheet only ============ */
+  @media print {
+    .hero, .nav, .scroll-cue, .foot, .lb, .facts-actions { display: none !important; }
+    .section:not(.facts) { display: none !important; }
+    main { max-width: none; padding: 0; }
+    .facts { padding-top: 0; }
+    .facts-stats { border-radius: 0; }
+    body { background: #fff; }
+    .frow, .fupd, .fstat { break-inside: avoid; }
   }
 </style>
 </head>
@@ -253,7 +312,12 @@
   </nav>
 
   <!-- ===================== SECTIONS ===================== -->
-  <main id="main"></main>
+  <!-- {{facts_panel}} renders the MLS data sheet (section 00) when listing.json
+       has a "facts" block; empty for photo-only tours. Photo-tour sections are
+       appended after it by the script below. -->
+  <main id="main">
+{{facts_panel}}
+  </main>
 
   <!-- ===================== FOOTER ===================== -->
   <footer class="foot">
@@ -305,6 +369,15 @@
     // Build nav + sections
     const navLinks = document.getElementById('navLinks');
     const main = document.getElementById('main');
+
+    // If the MLS facts panel is present (section 00), give it the first nav slot.
+    if (document.getElementById('facts')) {
+      const fa = document.createElement('a');
+      fa.className = 'nav-link'; fa.href = '#facts'; fa.dataset.sec = 'facts';
+      fa.innerHTML = '<span class="nn">00</span>Info';
+      navLinks.appendChild(fa);
+    }
+
     TOUR.forEach((s, si) => {
       const a = document.createElement('a');
       a.className = 'nav-link'; a.href = '#' + s.id; a.dataset.sec = s.id;
@@ -395,6 +468,31 @@
       const dx = e.changedTouches[0].clientX - tx;
       if (Math.abs(dx) > 50) show(cur + (dx < 0 ? 1 : -1));
     }, { passive: true });
+
+    // ===== Facts panel: copy + print (agent utilities) =====
+    const copyBtn = document.getElementById('copyFacts');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', async () => {
+        const txt = copyBtn.dataset.copy || '';
+        try {
+          await navigator.clipboard.writeText(txt);
+        } catch (err) {
+          const ta = document.createElement('textarea');
+          ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0';
+          document.body.appendChild(ta); ta.select();
+          try { document.execCommand('copy'); } catch (e) {}
+          ta.remove();
+        }
+        const lbl = copyBtn.querySelector('.lbl');
+        if (lbl) {
+          const prev = lbl.textContent;
+          lbl.textContent = 'Copied';
+          setTimeout(() => { lbl.textContent = prev; }, 1600);
+        }
+      });
+    }
+    const printBtn = document.getElementById('printFacts');
+    if (printBtn) printBtn.addEventListener('click', () => window.print());
 
     // Year
     document.getElementById('yr').textContent = new Date().getFullYear();
