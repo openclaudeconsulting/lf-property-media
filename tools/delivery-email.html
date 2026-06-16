@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="robots" content="noindex, nofollow" />
+<title>LF Property Media — Delivery Email Builder</title>
+<style>
+  :root {
+    --lf-paper:#faf8f5; --lf-white:#fff; --lf-cream:#f3ede2; --lf-ink:#1a1a1a;
+    --lf-muted:#6b6b6b; --lf-sand:#b08968; --lf-sand-dark:#8c6a4e; --lf-sand-soft:#ede2d1;
+    --lf-border:#e8e2d5; --radius:8px;
+  }
+  * { box-sizing:border-box; }
+  body {
+    margin:0; background:var(--lf-paper); color:var(--lf-ink);
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
+    line-height:1.5;
+  }
+  .wrap { max-width:1180px; margin:0 auto; padding:32px 24px 64px; }
+  header.top { display:flex; align-items:baseline; gap:14px; margin-bottom:6px; }
+  header.top .mark { font-family:Georgia,serif; font-size:1.5rem; font-weight:600; letter-spacing:-.01em; }
+  header.top .mark em { color:var(--lf-sand); font-style:normal; }
+  header.top .tag { font-size:.72rem; letter-spacing:.18em; text-transform:uppercase; color:var(--lf-muted); }
+  .lede { color:var(--lf-muted); margin:0 0 28px; max-width:62ch; }
+  .grid { display:grid; grid-template-columns:minmax(360px,1fr) minmax(380px,1.05fr); gap:36px; align-items:start; }
+  .panel { background:var(--lf-white); border:1px solid var(--lf-border); border-radius:var(--radius); padding:26px; }
+  .panel h2 { font-family:Georgia,serif; font-weight:600; font-size:1.15rem; margin:0 0 18px; }
+  .field { margin-bottom:16px; }
+  .field label { display:block; font-size:.72rem; letter-spacing:.12em; text-transform:uppercase; font-weight:600; color:var(--lf-muted); margin-bottom:7px; }
+  .field input, .field textarea {
+    width:100%; padding:11px 13px; font-size:.95rem; font-family:inherit; color:var(--lf-ink);
+    background:var(--lf-paper); border:1px solid var(--lf-border); border-radius:4px;
+  }
+  .field input:focus, .field textarea:focus { outline:none; border-color:var(--lf-sand); }
+  .field textarea { resize:vertical; min-height:64px; }
+  .field .hint { font-size:.76rem; color:var(--lf-muted); margin-top:5px; }
+  .row2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .sub { font-size:.72rem; letter-spacing:.12em; text-transform:uppercase; font-weight:600; color:var(--lf-ink); margin:24px 0 12px; padding-top:18px; border-top:1px solid var(--lf-border); }
+  .preview-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
+  .preview-head h2 { margin:0; }
+  .actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:18px; }
+  button.btn {
+    font-family:inherit; font-size:.82rem; font-weight:600; letter-spacing:.04em;
+    padding:12px 18px; border-radius:4px; cursor:pointer; border:1px solid var(--lf-ink);
+    background:var(--lf-ink); color:#fff; transition:background .15s ease, color .15s ease, border-color .15s ease;
+  }
+  button.btn:hover { background:var(--lf-sand); border-color:var(--lf-sand); }
+  button.btn.ghost { background:transparent; color:var(--lf-ink); }
+  button.btn.ghost:hover { background:var(--lf-ink); color:#fff; }
+  a.btn { text-decoration:none; display:inline-block; }
+  button.btn.copied { background:var(--lf-sand-dark); border-color:var(--lf-sand-dark); }
+  .preview-frame { border:1px solid var(--lf-border); border-radius:var(--radius); overflow:hidden; background:var(--lf-cream); }
+  #preview { width:100%; border:0; height:760px; background:var(--lf-cream); display:block; }
+  .empty-note { font-size:.82rem; color:var(--lf-muted); margin-top:12px; }
+  @media (max-width:880px){ .grid{ grid-template-columns:1fr; } #preview{ height:620px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <span class="mark">LF<em>.</em> Property Media</span>
+    <span class="tag">Internal &middot; Delivery Email Builder</span>
+  </header>
+  <p class="lede">Fill in the shoot details and paste the links you have. Empty links are skipped automatically. Then copy the branded email straight into Gmail, or open it pre-filled in your mail app.</p>
+
+  <div class="grid">
+    <!-- ---------------- Form ---------------- -->
+    <div class="panel">
+      <h2>Shoot details</h2>
+      <div class="row2">
+        <div class="field">
+          <label for="realtor">Realtor first name</label>
+          <input id="realtor" type="text" placeholder="John" autocomplete="off" />
+        </div>
+        <div class="field">
+          <label for="realtorEmail">Realtor email (optional)</label>
+          <input id="realtorEmail" type="email" placeholder="john@realty.com" autocomplete="off" />
+        </div>
+      </div>
+      <div class="field">
+        <label for="address">Property address</label>
+        <input id="address" type="text" placeholder="2719 Fort Worth Street, Sarasota" autocomplete="off" />
+      </div>
+
+      <div class="sub">Deliverable links — leave blank what doesn't apply</div>
+      <div class="field">
+        <label for="gallery">Photo gallery (Pixieset)</label>
+        <input id="gallery" type="url" placeholder="https://lfgallery.pixieset.com/..." autocomplete="off" />
+      </div>
+      <div class="field">
+        <label for="video">Video</label>
+        <input id="video" type="url" placeholder="https://... (Drive, YouTube, etc.)" autocomplete="off" />
+      </div>
+      <div class="field">
+        <label for="tour">360° Virtual tour (CloudPano)</label>
+        <input id="tour" type="url" placeholder="https://app.cloudpano.com/tours/..." autocomplete="off" />
+      </div>
+      <div class="field">
+        <label for="floorplan">2D floor plan</label>
+        <input id="floorplan" type="url" placeholder="https://... or PDF link" autocomplete="off" />
+      </div>
+      <div class="field">
+        <label for="website">Listing website</label>
+        <input id="website" type="url" placeholder="https://lfpropertymedia.org/properties/..." autocomplete="off" />
+      </div>
+
+      <div class="sub">Message</div>
+      <div class="field">
+        <label for="note">Personal note (optional)</label>
+        <textarea id="note" placeholder="Congrats on the new listing — let me know if you'd like any tweaks."></textarea>
+      </div>
+      <div class="field">
+        <label for="sender">Sign-off name</label>
+        <input id="sender" type="text" placeholder="Your name" autocomplete="off" />
+        <div class="hint">Saved on this computer so you don't retype it.</div>
+      </div>
+    </div>
+
+    <!-- ---------------- Preview ---------------- -->
+    <div class="panel">
+      <div class="preview-head">
+        <h2>Email preview</h2>
+        <span class="tag" id="subjectTag"></span>
+      </div>
+      <div class="preview-frame">
+        <iframe id="preview" title="Email preview"></iframe>
+      </div>
+      <div class="actions">
+        <button class="btn" id="copyRich">Copy email (paste into Gmail)</button>
+        <button class="btn ghost" id="copyText">Copy as plain text</button>
+        <a class="btn ghost" id="openMail" href="#">Open in mail app</a>
+      </div>
+      <p class="empty-note" id="emptyNote"></p>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var F = {
+    realtor: document.getElementById('realtor'),
+    realtorEmail: document.getElementById('realtorEmail'),
+    address: document.getElementById('address'),
+    gallery: document.getElementById('gallery'),
+    video: document.getElementById('video'),
+    tour: document.getElementById('tour'),
+    floorplan: document.getElementById('floorplan'),
+    website: document.getElementById('website'),
+    note: document.getElementById('note'),
+    sender: document.getElementById('sender')
+  };
+  var preview = document.getElementById('preview');
+  var subjectTag = document.getElementById('subjectTag');
+  var emptyNote = document.getElementById('emptyNote');
+  var copyRichBtn = document.getElementById('copyRich');
+  var copyTextBtn = document.getElementById('copyText');
+  var openMail = document.getElementById('openMail');
+
+  var BRAND = { paper:'#faf8f5', white:'#ffffff', cream:'#f3ede2', ink:'#1a1a1a', muted:'#6b6b6b', sand:'#b08968', sandDark:'#8c6a4e', border:'#e8e2d5' };
+  var PHONE = '(941) 387-5399', EMAIL = 'l.f.gallery03@gmail.com', IG = '@lfpropertymedia';
+
+  // Restore sign-off name.
+  try { F.sender.value = localStorage.getItem('lf_sender') || ''; } catch (e) {}
+
+  var DELIVERABLES = [
+    { key:'gallery',   label:'Photo Gallery',       cta:'View the Photo Gallery' },
+    { key:'video',     label:'Listing Video',       cta:'Watch the Video' },
+    { key:'tour',      label:'360° Virtual Tour',   cta:'Open the Virtual Tour' },
+    { key:'floorplan', label:'2D Floor Plan',       cta:'View the Floor Plan' },
+    { key:'website',   label:'Listing Website',     cta:'Open the Listing Website' }
+  ];
+
+  function esc(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function val(k) { return (F[k].value || '').trim(); }
+  function activeLinks() { return DELIVERABLES.filter(function (d) { return val(d.key); }); }
+
+  function subjectLine() {
+    var a = val('address');
+    return 'Your listing media is ready' + (a ? ' — ' + a : '');
+  }
+
+  function buildEmailHtml() {
+    var realtor = val('realtor');
+    var address = val('address');
+    var note = val('note');
+    var sender = val('sender');
+    var links = activeLinks();
+
+    var rows = links.map(function (d) {
+      var url = val(d.key);
+      return ''
+        + '<tr><td style="padding:7px 0;">'
+        +   '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">'
+        +     '<tr>'
+        +       '<td style="font-family:Georgia,\'Times New Roman\',serif;font-size:15px;color:' + BRAND.ink + ';padding-right:12px;">' + esc(d.label) + '</td>'
+        +       '<td align="right">'
+        +         '<a href="' + esc(url) + '" style="display:inline-block;background:' + BRAND.ink + ';color:#ffffff;text-decoration:none;font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:bold;letter-spacing:.04em;padding:10px 18px;border-radius:4px;">' + esc(d.cta) + ' &rarr;</a>'
+        +       '</td>'
+        +     '</tr>'
+        +   '</table>'
+        + '</td></tr>';
+    }).join('');
+
+    var noteBlock = note
+      ? '<p style="margin:22px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:15px;color:' + BRAND.ink + ';line-height:1.6;">' + esc(note).replace(/\n/g,'<br/>') + '</p>'
+      : '';
+
+    var signoff = sender ? esc(sender) + '<br/>' : '';
+
+    return ''
+    + '<div style="background:' + BRAND.paper + ';padding:28px 12px;font-family:Arial,Helvetica,sans-serif;">'
+    + '<table role="presentation" align="center" width="600" cellpadding="0" cellspacing="0" style="border-collapse:collapse;max-width:600px;width:100%;background:' + BRAND.white + ';border:1px solid ' + BRAND.border + ';border-radius:8px;overflow:hidden;">'
+    // Header
+    + '<tr><td style="background:' + BRAND.ink + ';padding:26px 32px;">'
+    +   '<div style="font-family:Georgia,\'Times New Roman\',serif;font-size:22px;font-weight:bold;color:#ffffff;">LF<span style="color:' + BRAND.sand + ';">.</span> Property Media</div>'
+    +   '<div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:' + BRAND.sand + ';margin-top:5px;">Visuals that sell</div>'
+    + '</td></tr>'
+    // Body
+    + '<tr><td style="padding:34px 32px 10px;">'
+    +   '<h1 style="margin:0 0 4px;font-family:Georgia,\'Times New Roman\',serif;font-size:26px;font-weight:600;color:' + BRAND.ink + ';">Your listing media is ready</h1>'
+    +   (address ? '<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:' + BRAND.sandDark + ';font-weight:bold;letter-spacing:.02em;margin-bottom:18px;">' + esc(address) + '</div>' : '')
+    +   '<p style="margin:14px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:15px;color:' + BRAND.ink + ';line-height:1.6;">Hi ' + (realtor ? esc(realtor) : 'there') + ',</p>'
+    +   '<p style="margin:12px 0 8px;font-family:Arial,Helvetica,sans-serif;font-size:15px;color:' + BRAND.ink + ';line-height:1.6;">Everything for your listing is edited and ready to go live. Here\'s the full set:</p>'
+    + '</td></tr>'
+    // Links
+    + (rows
+        ? '<tr><td style="padding:6px 32px 6px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border-top:1px solid ' + BRAND.border + ';border-bottom:1px solid ' + BRAND.border + ';">' + rows + '</table></td></tr>'
+        : '<tr><td style="padding:6px 32px;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:' + BRAND.muted + ';font-style:italic;">[ Add at least one deliverable link to populate the email. ]</td></tr>')
+    // Note + signoff
+    + '<tr><td style="padding:6px 32px 30px;">'
+    +   noteBlock
+    +   '<p style="margin:24px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:15px;color:' + BRAND.ink + ';line-height:1.6;">Thank you,<br/>' + signoff + 'LF Property Media</p>'
+    + '</td></tr>'
+    // Footer
+    + '<tr><td style="background:' + BRAND.cream + ';padding:20px 32px;border-top:1px solid ' + BRAND.border + ';">'
+    +   '<div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:' + BRAND.muted + ';line-height:1.7;">'
+    +     '<a href="tel:+19413875399" style="color:' + BRAND.sandDark + ';text-decoration:none;">' + PHONE + '</a> &nbsp;&middot;&nbsp; '
+    +     '<a href="mailto:' + EMAIL + '" style="color:' + BRAND.sandDark + ';text-decoration:none;">' + EMAIL + '</a> &nbsp;&middot;&nbsp; '
+    +     IG + '<br/>Sarasota, FL &middot; Southwest Florida'
+    +   '</div>'
+    + '</td></tr>'
+    + '</table></div>';
+  }
+
+  function buildPlainText() {
+    var realtor = val('realtor');
+    var note = val('note');
+    var sender = val('sender');
+    var lines = [];
+    lines.push('Hi ' + (realtor || 'there') + ',');
+    lines.push('');
+    lines.push('Everything for your listing is edited and ready to go live. Here\'s the full set:');
+    lines.push('');
+    activeLinks().forEach(function (d) { lines.push('- ' + d.label + ': ' + val(d.key)); });
+    if (note) { lines.push(''); lines.push(note); }
+    lines.push('');
+    lines.push('Thank you,');
+    if (sender) lines.push(sender);
+    lines.push('LF Property Media');
+    lines.push(PHONE + ' | ' + EMAIL + ' | ' + IG);
+    return lines.join('\n');
+  }
+
+  function render() {
+    var html = buildEmailHtml();
+    var doc = preview.contentDocument || preview.contentWindow.document;
+    doc.open(); doc.write('<!DOCTYPE html><html><head><meta charset="utf-8"></head><body style="margin:0;">' + html + '</body></html>'); doc.close();
+
+    subjectTag.textContent = 'Subject: ' + subjectLine();
+
+    var n = activeLinks().length;
+    emptyNote.textContent = n
+      ? n + ' deliverable link' + (n > 1 ? 's' : '') + ' included.'
+      : 'No deliverable links yet — paste at least one above.';
+
+    // mailto
+    var to = val('realtorEmail');
+    var mailto = 'mailto:' + encodeURIComponent(to)
+      + '?subject=' + encodeURIComponent(subjectLine())
+      + '&body=' + encodeURIComponent(buildPlainText());
+    openMail.setAttribute('href', mailto);
+
+    try { localStorage.setItem('lf_sender', val('sender')); } catch (e) {}
+  }
+
+  function flash(btn, label) {
+    var orig = btn.textContent;
+    btn.classList.add('copied'); btn.textContent = label;
+    setTimeout(function () { btn.textContent = orig; btn.classList.remove('copied'); }, 1700);
+  }
+
+  copyRichBtn.addEventListener('click', function () {
+    var html = buildEmailHtml();
+    var text = buildPlainText();
+    if (window.ClipboardItem && navigator.clipboard && navigator.clipboard.write) {
+      var item = new ClipboardItem({
+        'text/html': new Blob([html], { type: 'text/html' }),
+        'text/plain': new Blob([text], { type: 'text/plain' })
+      });
+      navigator.clipboard.write([item]).then(
+        function () { flash(copyRichBtn, 'Copied — paste into Gmail ✓'); },
+        function () { selectionCopyHtml(html); flash(copyRichBtn, 'Copied ✓'); }
+      );
+    } else {
+      selectionCopyHtml(html);
+      flash(copyRichBtn, 'Copied ✓');
+    }
+  });
+
+  // Fallback: render to an offscreen element, select it, execCommand copy (keeps rich formatting).
+  function selectionCopyHtml(html) {
+    var holder = document.createElement('div');
+    holder.style.position = 'fixed'; holder.style.left = '-9999px'; holder.style.top = '0';
+    holder.setAttribute('contenteditable', 'true');
+    holder.innerHTML = html;
+    document.body.appendChild(holder);
+    var range = document.createRange(); range.selectNodeContents(holder);
+    var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
+    try { document.execCommand('copy'); } catch (e) {}
+    sel.removeAllRanges(); document.body.removeChild(holder);
+  }
+
+  copyTextBtn.addEventListener('click', function () {
+    var text = buildPlainText();
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () { flash(copyTextBtn, 'Copied ✓'); }, function () { legacyCopyText(text); flash(copyTextBtn, 'Copied ✓'); });
+    } else { legacyCopyText(text); flash(copyTextBtn, 'Copied ✓'); }
+  });
+
+  function legacyCopyText(text) {
+    var ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+
+  Object.keys(F).forEach(function (k) { F[k].addEventListener('input', render); });
+  render();
+})();
+</script>
+</body>
+</html>
