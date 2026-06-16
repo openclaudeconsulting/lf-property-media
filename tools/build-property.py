@@ -7,7 +7,21 @@ Usage
   python tools/build-property.py --new <slug>      # scaffold a new property (draft)
   python tools/build-property.py <slug>            # build one property
   python tools/build-property.py <slug> <slug>     # build many
-  python tools/build-property.py --all             # rebuild every property
+  python tools/build-property.py --hub             # rebuild hub only
+  python tools/build-property.py --all             # rebuild every property + hub
+
+  Append --commit to any of the above to git add + commit + push the
+  generated changes. Only properties/, properties/index.html, and sitemap.xml
+  get staged — other working-tree changes are left alone.
+      python tools/build-property.py <slug> --commit
+      python tools/build-property.py --all --commit
+
+Side effects of every build
+---------------------------
+  - properties/<slug>/index.html regenerated
+  - properties/index.html (hub) regenerated
+  - sitemap.xml gets a <url> entry for the property if not already there
+    (skipped for unlisted properties)
 
 Each property lives at:
   properties/<slug>/
@@ -33,7 +47,13 @@ ROOT = Path(__file__).parent.parent
 PROPERTIES_DIR = ROOT / "properties"
 TEMPLATE_PATH = ROOT / "tools" / "templates" / "property-page.html"
 HUB_TEMPLATE_PATH = ROOT / "tools" / "templates" / "properties-hub.html"
+SITEMAP_PATH = ROOT / "sitemap.xml"
 SITE_URL = "https://lfpropertymedia.org"
+
+# Identity used for the auto-commit so contributions stay attributed to the
+# studio account. Override by exporting GIT_AUTHOR_NAME / GIT_AUTHOR_EMAIL.
+GIT_AUTHOR_NAME = "LF Property Media"
+GIT_AUTHOR_EMAIL = "openclaudeconsulting@gmail.com"
 
 
 def render_tour_js(sections: list[dict[str, Any]]) -> str:
@@ -155,6 +175,116 @@ def build(slug: str) -> None:
     out = prop_dir / "index.html"
     out.write_text(html, encoding="utf-8")
     print(f"Built {slug}: {photo_count} photos in {len(sections)} sections -> {out}")
+
+    # Side effect: keep sitemap.xml in sync. Idempotent (skips if URL already
+    # present). Skipped for unlisted properties — those are private links.
+    if not listing.get("unlisted"):
+        if _update_sitemap(slug, listing, address, city, hero_photo):
+            print(f"  -> sitemap.xml: added /properties/{slug}/")
+
+
+def _update_sitemap(slug: str, listing: dict[str, Any], address: str, city: str, hero_photo: str) -> bool:
+    """Append a <url> entry for this property to sitemap.xml if not already there.
+
+    Returns True if the sitemap was modified, False if the entry already existed
+    or the sitemap couldn't be found.
+    """
+    if not SITEMAP_PATH.exists():
+        print(f"  WARNING: sitemap.xml not found at {SITEMAP_PATH}", file=sys.stderr)
+        return False
+
+    text = SITEMAP_PATH.read_text(encoding="utf-8")
+    canonical = f"{SITE_URL}/properties/{slug}/"
+    if canonical in text:
+        return False  # already listed
+
+    hero_url = f"{canonical}media/{hero_photo}"
+    entry = (
+        f"  <url>\n"
+        f"    <loc>{canonical}</loc>\n"
+        f"    <changefreq>monthly</changefreq>\n"
+        f"    <priority>0.8</priority>\n"
+        f"    <image:image>\n"
+        f"      <image:loc>{hero_url}</image:loc>\n"
+        f"      <image:title>{html_lib.escape(address)}, {html_lib.escape(city)} — Listing Tour</image:title>\n"
+        f"    </image:image>\n"
+        f"  </url>\n\n"
+    )
+    if "</urlset>" not in text:
+        print(f"  WARNING: sitemap.xml has no </urlset> close tag", file=sys.stderr)
+        return False
+
+    # Insert immediately before the closing </urlset>.
+    text = text.replace("</urlset>", entry + "</urlset>")
+    SITEMAP_PATH.write_text(text, encoding="utf-8")
+    return True
+
+
+def _commit_and_push(slugs: list[str]) -> None:
+    """Stage the listing folders, the hub, and sitemap; commit and push.
+
+    Only stages paths we control. Other working-tree changes are left alone.
+    Author identity is set inline so we don't depend on git config.
+    """
+    import subprocess
+
+    paths_to_stage = [
+        "properties/index.html",
+        "sitemap.xml",
+    ]
+    for slug in slugs:
+        paths_to_stage.append(f"properties/{slug}/")
+
+    # git add
+    result = subprocess.run(
+        ["git", "add"] + paths_to_stage,
+        cwd=ROOT, capture_output=True, text=True
+    )
+    if result.returncode != 0:
+        print(f"git add failed:\n{result.stderr}", file=sys.stderr)
+        sys.exit(1)
+
+    # Check if there's anything staged from our paths
+    diff_check = subprocess.run(
+        ["git", "diff", "--cached", "--quiet"],
+        cwd=ROOT
+    )
+    if diff_check.returncode == 0:
+        print("Nothing to commit - sitemap + pages already match origin.")
+        return
+
+    # Commit
+    if len(slugs) == 1:
+        msg = f"Property tour build: {slugs[0]}"
+    else:
+        msg = f"Property tour build: {len(slugs)} listing(s)"
+
+    commit = subprocess.run(
+        [
+            "git",
+            "-c", f"user.name={GIT_AUTHOR_NAME}",
+            "-c", f"user.email={GIT_AUTHOR_EMAIL}",
+            "commit", "-m", msg,
+        ],
+        cwd=ROOT, capture_output=True, text=True
+    )
+    if commit.returncode != 0:
+        print(f"git commit failed:\n{commit.stderr}", file=sys.stderr)
+        sys.exit(1)
+    print(f"Committed: {msg}")
+
+    # Push
+    push = subprocess.run(
+        ["git", "push", "origin", "main"],
+        cwd=ROOT, capture_output=True, text=True
+    )
+    if push.returncode != 0:
+        print(f"git push failed:\n{push.stderr}", file=sys.stderr)
+        sys.exit(1)
+    # The push output usually lands on stderr in git; surface its last lines
+    out = (push.stderr or push.stdout).strip().splitlines()
+    if out:
+        print("Pushed:", out[-1])
 
 
 def build_all() -> None:
@@ -342,7 +472,15 @@ def main(argv: list[str]) -> int:
     if not argv:
         print(__doc__)
         return 1
+
+    # --commit is a cross-cutting flag handled at the end.
+    commit_requested = "--commit" in argv
+    argv = [a for a in argv if a != "--commit"]
+
     if "--new" in argv:
+        # Scaffolding doesn't produce committable output by itself.
+        if commit_requested:
+            print("Note: --commit is ignored with --new (nothing to publish until you add photos + run a build).", file=sys.stderr)
         slugs = [a for a in argv if a != "--new"]
         if not slugs:
             print("Usage: python tools/build-property.py --new <slug> [<slug> ...]", file=sys.stderr)
@@ -350,19 +488,34 @@ def main(argv: list[str]) -> int:
         for slug in slugs:
             new_property(slug)
         return 0
+
+    built_slugs: list[str] = []
+
     if "--hub" in argv:
         build_hub()
         argv = [a for a in argv if a != "--hub"]
         if not argv:
+            if commit_requested:
+                _commit_and_push([])  # hub-only — paths_to_stage still includes index + sitemap
             return 0
+
     if "--all" in argv:
-        build_all()
+        for prop_dir in sorted(PROPERTIES_DIR.iterdir()):
+            if prop_dir.is_dir() and (prop_dir / "listing.json").exists():
+                build(prop_dir.name)
+                built_slugs.append(prop_dir.name)
+        if not built_slugs:
+            print("No properties with listing.json found in properties/")
         build_hub()
-        return 0
-    for slug in argv:
-        build(slug)
-    # Always refresh the hub after building any property so cards stay in sync.
-    build_hub()
+    else:
+        for slug in argv:
+            build(slug)
+            built_slugs.append(slug)
+        # Always refresh the hub after building any property so cards stay in sync.
+        build_hub()
+
+    if commit_requested:
+        _commit_and_push(built_slugs)
     return 0
 
 
