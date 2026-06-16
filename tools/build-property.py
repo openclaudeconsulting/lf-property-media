@@ -4,6 +4,7 @@ Generate a property listing tour page from listing.json + a shared HTML template
 
 Usage
 -----
+  python tools/build-property.py --new <slug>      # scaffold a new property (draft)
   python tools/build-property.py <slug>            # build one property
   python tools/build-property.py <slug> <slug>     # build many
   python tools/build-property.py --all             # rebuild every property
@@ -269,10 +270,86 @@ def build_hub() -> None:
     )
 
 
+# ============================================================
+#  SCAFFOLD — create a new property folder (Phase: new listing)
+# ============================================================
+
+STARTER_SECTIONS = [
+    {"id": "exterior", "title": "Curb Appeal", "sub": "Street presence & approach", "dir": "Home_Photos", "photos": []},
+    {"id": "interior", "title": "Interior", "sub": "Living spaces", "dir": "Home_Photos", "photos": []},
+    {"id": "aerial", "title": "Aerial & Lot", "sub": "The property from above", "dir": "Aerial_Photos", "photos": []},
+]
+STARTER_MEDIA_DIRS = ["Home_Photos", "Aerial_Photos"]
+
+
+def slug_to_address(slug: str) -> str:
+    """'2719-fort-worth-street' -> '2719 Fort Worth Street' (a starting point to edit)."""
+    return " ".join(w.capitalize() for w in slug.split("-") if w)
+
+
+def new_property(slug: str) -> None:
+    """Scaffold properties/<slug>/ with a draft listing.json + media subfolders.
+
+    Created as status="draft" + unlisted=true so it stays off the public hub
+    until the owner fills in photos and flips those flags. Never overwrites an
+    existing listing.json.
+    """
+    prop_dir = PROPERTIES_DIR / slug
+    listing_path = prop_dir / "listing.json"
+    if listing_path.exists():
+        print(f"SKIP {slug}: listing.json already exists (left untouched).", file=sys.stderr)
+        return
+
+    address = slug_to_address(slug)
+    parts = address.split()
+    listing = {
+        "slug": slug,
+        "status": "draft",
+        "unlisted": True,
+        "address": address,
+        "address_short": address,
+        "address_emphasis": parts[-1] if parts else "",
+        "city": "Sarasota",
+        "state": "FL",
+        "zip": "",
+        "country": "US",
+        "hero_kicker": "Sarasota, Florida · Full Visual Tour",
+        "hero_describe": "A Southwest Florida home",
+        "hero_categories": "Curb Appeal · Interior · Aerial",
+        "hero_photo": "hero.jpg",
+        "footer_note": "Photographed for listing",
+        "sections": STARTER_SECTIONS,
+    }
+
+    for d in STARTER_MEDIA_DIRS:
+        (prop_dir / "media" / d).mkdir(parents=True, exist_ok=True)
+    listing_path.write_text(
+        json.dumps(listing, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+    )
+
+    print(f"Scaffolded {slug} (draft, unlisted):")
+    print(f"  {listing_path}")
+    print(f"  {prop_dir / 'media'}/  -> drop hero.jpg + photos into "
+          + ", ".join(STARTER_MEDIA_DIRS) + "/")
+    print("Next:")
+    print("  1. Add photos to media/ subfolders (filenames go in listing.json 'photos').")
+    print("  2. Fill in address, sections, and photo lists in listing.json.")
+    print('  3. Set "status":"active" and "unlisted":false when ready to publish.')
+    print(f"  4. Build it:  python tools/build-property.py {slug}")
+
+
 def main(argv: list[str]) -> int:
     if not argv:
         print(__doc__)
         return 1
+    if "--new" in argv:
+        slugs = [a for a in argv if a != "--new"]
+        if not slugs:
+            print("Usage: python tools/build-property.py --new <slug> [<slug> ...]", file=sys.stderr)
+            return 1
+        for slug in slugs:
+            new_property(slug)
+        return 0
     if "--hub" in argv:
         build_hub()
         argv = [a for a in argv if a != "--hub"]
