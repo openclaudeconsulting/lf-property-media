@@ -1,0 +1,75 @@
+{
+  "slug": "2719-fort-worth-street",
+  "status": "active",
+  "unlisted": false,
+  "address": "2719 Fort Worth Street",
+  "address_short": "2719 Fort Worth St.",
+  "address_emphasis": "Street",
+  "city": "Sarasota",
+  "state": "FL",
+  "zip": "34231",
+  "country": "US",
+  "hero_kicker": "Sarasota, Florida · Full Visual Tour",
+  "hero_describe": "A mid-century coastal home",
+  "hero_categories": "Curb Appeal · Interior · Pool & Lanai · Aerial",
+  "hero_photo": "hero.jpg",
+  "footer_note": "Photographed for listing",
+  "sections": [
+    {
+      "id": "exterior",
+      "title": "Curb Appeal",
+      "sub": "Street presence & approach",
+      "dir": "Home_Photos",
+      "photos": ["DSC07519", "DSC07525", "DSC07522", "DSC07516", "DSC07528", "DSC07513"]
+    },
+    {
+      "id": "living",
+      "title": "Living & Kitchen",
+      "sub": "Great room, hearth & kitchen",
+      "dir": "Home_Photos",
+      "photos": ["DSC07423", "DSC07426", "DSC07420", "DSC07432", "DSC07435", "DSC07438", "DSC07429", "DSC07465"]
+    },
+    {
+      "id": "loft",
+      "title": "Loft & Music Room",
+      "sub": "The upstairs retreat",
+      "dir": "Home_Photos",
+      "photos": ["DSC07414", "DSC07396", "DSC07411", "DSC07408", "DSC07393", "DSC07468", "DSC07462"]
+    },
+    {
+      "id": "bedrooms",
+      "title": "Bedrooms",
+      "sub": "Rest & quarters",
+      "dir": "Home_Photos",
+      "photos": ["DSC07441", "DSC07450", "DSC07444", "DSC07447", "DSC07453", "DSC07399"]
+    },
+    {
+      "id": "baths",
+      "title": "Baths & Utility",
+      "sub": "Bathrooms & laundry",
+      "dir": "Home_Photos",
+      "photos": ["DSC07456", "DSC07459", "DSC07402", "DSC07405", "DSC07471", "DSC07477"]
+    },
+    {
+      "id": "pool",
+      "title": "Pool & Lanai",
+      "sub": "Screened outdoor living",
+      "dir": "Home_Photos",
+      "photos": ["DSC07486", "DSC07483", "DSC07489", "DSC07417"]
+    },
+    {
+      "id": "backyard",
+      "title": "Backyard & Grounds",
+      "sub": "Gardens & tropical setting",
+      "dir": "Home_Photos",
+      "photos": ["DSC07507", "DSC07510", "DSC07501", "DSC07504", "DSC07492", "DSC07495", "DSC07498"]
+    },
+    {
+      "id": "aerial",
+      "title": "Aerial & Lot",
+      "sub": "The property from above",
+      "dir": "Aerial_Photos",
+      "photos": ["DJI_0397", "DJI_0395", "DJI_0396", "DJI_0398", "DJI_0404"]
+    }
+  ]
+}

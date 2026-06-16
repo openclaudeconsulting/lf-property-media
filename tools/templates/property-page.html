@@ -10,22 +10,22 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>2719 Fort Worth Street · Sarasota — Listing Tour by LF Property Media</title>
-<meta name="description" content="Full visual tour of 2719 Fort Worth Street, Sarasota, FL. 49 photographs by LF Property Media — curb appeal · interior · pool &amp; lanai · aerial. A mid-century coastal home." />
-<link rel="canonical" href="https://lfpropertymedia.org/properties/2719-fort-worth-street/" />
+<title>{{title}}</title>
+<meta name="description" content="{{description}}" />
+<link rel="canonical" href="{{canonical}}" />
 <link rel="icon" type="image/svg+xml" href="/images/favicon.svg" />
 <meta property="og:site_name" content="LF Property Media" />
 <meta property="og:type" content="website" />
-<meta property="og:url" content="https://lfpropertymedia.org/properties/2719-fort-worth-street/" />
-<meta property="og:title" content="2719 Fort Worth Street, Sarasota — Listing Tour" />
-<meta property="og:description" content="A mid-century coastal home. 49 photographs by LF Property Media — Curb Appeal · Interior · Pool &amp; Lanai · Aerial." />
-<meta property="og:image" content="https://lfpropertymedia.org/properties/2719-fort-worth-street/media/hero.jpg" />
+<meta property="og:url" content="{{canonical}}" />
+<meta property="og:title" content="{{og_title}}" />
+<meta property="og:description" content="{{og_description}}" />
+<meta property="og:image" content="{{hero_image_url}}" />
 <meta property="og:image:width" content="1920" />
 <meta property="og:image:height" content="1288" />
 <meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:title" content="2719 Fort Worth Street, Sarasota — Listing Tour" />
-<meta name="twitter:description" content="A mid-century coastal home. 49 photographs by LF Property Media — Curb Appeal · Interior · Pool &amp; Lanai · Aerial." />
-<meta name="twitter:image" content="https://lfpropertymedia.org/properties/2719-fort-worth-street/media/hero.jpg" />
+<meta name="twitter:title" content="{{og_title}}" />
+<meta name="twitter:description" content="{{og_description}}" />
+<meta name="twitter:image" content="{{hero_image_url}}" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -33,21 +33,21 @@
 {
   "@context": "https://schema.org",
   "@type": "SingleFamilyResidence",
-  "name": "2719 Fort Worth Street",
+  "name": "{{address}}",
   "address": {
     "@type": "PostalAddress",
-    "streetAddress": "2719 Fort Worth Street",
-    "addressLocality": "Sarasota",
-    "addressRegion": "FL",
-    "postalCode": "34231",
-    "addressCountry": "US"
+    "streetAddress": "{{address}}",
+    "addressLocality": "{{city}}",
+    "addressRegion": "{{state}}",
+    "postalCode": "{{zip}}",
+    "addressCountry": "{{country}}"
   },
-  "image": "https://lfpropertymedia.org/properties/2719-fort-worth-street/media/hero.jpg",
-  "description": "A mid-century coastal home. 49 photographs by LF Property Media — Curb Appeal · Interior · Pool &amp; Lanai · Aerial.",
-  "url": "https://lfpropertymedia.org/properties/2719-fort-worth-street/",
+  "image": "{{hero_image_url}}",
+  "description": "{{og_description}}",
+  "url": "{{canonical}}",
   "photo": {
     "@type": "ImageObject",
-    "url": "https://lfpropertymedia.org/properties/2719-fort-worth-street/media/hero.jpg",
+    "url": "{{hero_image_url}}",
     "creator": {
       "@type": "Organization",
       "name": "LF Property Media",
@@ -222,7 +222,7 @@
 
   <!-- ===================== HERO ===================== -->
   <header class="hero" data-screen-label="hero">
-    <img class="hero-img" src="media/hero.jpg" id="heroImg" alt="2719 Fort Worth Street, Sarasota — front elevation" />
+    <img class="hero-img" src="media/{{hero_photo}}" id="heroImg" alt="{{hero_alt}}" />
     <div class="hero-top">
       <a href="/" class="wm-link" aria-label="LF Property Media — return to main site">
         <div class="wm">LF<span class="dot">.</span><span class="sub">Property Media · Sarasota</span></div>
@@ -230,12 +230,12 @@
       <div class="hero-contact"><span class="lbl">Listing Tour</span>(941) 387-5399</div>
     </div>
     <div class="hero-body">
-      <div class="hero-kicker">Sarasota, Florida · Full Visual Tour</div>
-      <h1 class="hero-title">2719 Fort Worth <em>Street</em></h1>
+      <div class="hero-kicker">{{hero_kicker}}</div>
+      <h1 class="hero-title">{{address_with_em}}</h1>
       <div class="hero-meta">
-        <span>A mid-century coastal home</span><span class="pip"></span>
-        <span>49 photographs</span><span class="pip"></span>
-        <span>Curb Appeal · Interior · Pool &amp; Lanai · Aerial</span>
+        <span>{{hero_describe}}</span><span class="pip"></span>
+        <span>{{photo_count}} photographs</span><span class="pip"></span>
+        <span>{{hero_categories}}</span>
       </div>
     </div>
     <div class="scroll-cue">
@@ -247,7 +247,7 @@
   <!-- ===================== STICKY NAV ===================== -->
   <nav class="nav" id="nav">
     <div class="nav-inner">
-      <a href="#top" class="nav-addr">2719 Fort Worth St.<span class="dot">.</span></a>
+      <a href="#top" class="nav-addr">{{address_short}}<span class="dot">.</span></a>
       <div class="nav-links" id="navLinks"></div>
     </div>
   </nav>
@@ -275,7 +275,7 @@
       </div>
       <div class="foot-bottom">
         <span>© <span id="yr">2026</span> LF Property Media · Sarasota, Florida</span>
-        <span>2719 Fort Worth Street · Photographed for listing</span>
+        <span>{{footer_address_line}}</span>
         <a href="/">lfpropertymedia.org</a>
       </div>
     </div>
@@ -293,14 +293,7 @@
   <script>
     const BASE = "media/";
     const TOUR = [
-      { id:"exterior", n:"01", title:"Curb Appeal", sub:"Street presence & approach", dir:"Home_Photos", photos:["DSC07519", "DSC07525", "DSC07522", "DSC07516", "DSC07528", "DSC07513"] },
-      { id:"living", n:"02", title:"Living & Kitchen", sub:"Great room, hearth & kitchen", dir:"Home_Photos", photos:["DSC07423", "DSC07426", "DSC07420", "DSC07432", "DSC07435", "DSC07438", "DSC07429", "DSC07465"] },
-      { id:"loft", n:"03", title:"Loft & Music Room", sub:"The upstairs retreat", dir:"Home_Photos", photos:["DSC07414", "DSC07396", "DSC07411", "DSC07408", "DSC07393", "DSC07468", "DSC07462"] },
-      { id:"bedrooms", n:"04", title:"Bedrooms", sub:"Rest & quarters", dir:"Home_Photos", photos:["DSC07441", "DSC07450", "DSC07444", "DSC07447", "DSC07453", "DSC07399"] },
-      { id:"baths", n:"05", title:"Baths & Utility", sub:"Bathrooms & laundry", dir:"Home_Photos", photos:["DSC07456", "DSC07459", "DSC07402", "DSC07405", "DSC07471", "DSC07477"] },
-      { id:"pool", n:"06", title:"Pool & Lanai", sub:"Screened outdoor living", dir:"Home_Photos", photos:["DSC07486", "DSC07483", "DSC07489", "DSC07417"] },
-      { id:"backyard", n:"07", title:"Backyard & Grounds", sub:"Gardens & tropical setting", dir:"Home_Photos", photos:["DSC07507", "DSC07510", "DSC07501", "DSC07504", "DSC07492", "DSC07495", "DSC07498"] },
-      { id:"aerial", n:"08", title:"Aerial & Lot", sub:"The property from above", dir:"Aerial_Photos", photos:["DJI_0397", "DJI_0395", "DJI_0396", "DJI_0398", "DJI_0404"] }
+{{tour_data}}
     ];
 
     const src = (s, name) => BASE + s.dir + "/" + name + ".jpg";
@@ -337,7 +330,7 @@
         const fig = document.createElement('figure');
         fig.className = 'tile'; fig.dataset.idx = idx;
         fig.innerHTML =
-          '<img loading="lazy" src="' + url + '" alt="' + s.title + ' — 2719 Fort Worth Street" />' +
+          '<img loading="lazy" src="' + url + '" alt="' + s.title + ' — {{address}}" />' +
           '<span class="expand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">' +
           '<path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></span>';
         col.appendChild(fig);
