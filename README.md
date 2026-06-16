@@ -30,6 +30,19 @@ Static marketing site for **LF Property Media**, a real estate photography studi
 - `_headers`, `_redirects` — Cloudflare Pages config
 - `.gitignore` — excludes OS junk, editor files, raw photo formats, unrelated STLs
 
+## Automation & internal tools
+
+The business backend (intake → scheduling → invoicing → delivery → payment) is
+partly automated. See **[`docs/AUTOMATION.md`](docs/AUTOMATION.md)** for the full
+map of what's built, what's HoneyBook-native, and what's manual. The buildable tools:
+
+| Tool | Purpose |
+|---|---|
+| `packages.html` `#build-quote` | Instant-quote calculator — live pricing from service + sq-ft selections, hands off to HoneyBook |
+| `tools/new-job.py` (`new-job.bat`) | Scaffolds the raw + final shoot folder trees from realtor / address / date |
+| `tools/delivery-email.html` | Builds one branded delivery email with every deliverable link |
+| `tools/build-property.py` | Generates branded property listing-tour pages + the `/properties/` hub |
+
 ## Images — what's live and what's still placeholder
 
 Real photos live in `images/` as AVIF. Filenames in use:
