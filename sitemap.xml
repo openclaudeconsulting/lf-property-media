@@ -204,4 +204,15 @@
     <priority>0.5</priority>
   </url>
 
+  <!-- Property listing tours -->
+  <url>
+    <loc>https://lfpropertymedia.org/properties/2719-fort-worth-street/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://lfpropertymedia.org/properties/2719-fort-worth-street/media/hero.jpg</image:loc>
+      <image:title>2719 Fort Worth Street, Sarasota — Listing Tour</image:title>
+    </image:image>
+  </url>
+
 </urlset>
