@@ -55,8 +55,8 @@ if pricing ever changes, update them here *and* in HoneyBook so they match.
 Builds the standard folder structure for a shoot so you never hand-make folders:
 
 ```
-<base>/Real Estate/<Realtor Name>/<Address>/<Month-Day>/   Photos  Drone  360  Video
-<base>/Final/<Realtor Name>/<Address>/<Month-Day>/         Home  Aerial  Amenities  Video  360  Floorplan
+<base>/Real Estate/<Realtor Name>/<Month-Day> <Address>/   Photos  Drone  360  Video
+<base>/Final/<Realtor Name>/<Month-Day> <Address>/         Home  Aerial  Amenities  Video  360  Floorplan
 ```
 
 The Final sub-folders mirror the Pixieset galleries (Home / Aerial / Amenities).
