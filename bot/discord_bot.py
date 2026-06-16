@@ -27,6 +27,7 @@ test run: python bot/discord_bot.py
 """
 from __future__ import annotations
 
+import asyncio
 import json
 import os
 import subprocess
@@ -93,7 +94,9 @@ virtual_tour (bool). Put anything quoted separately (twilight, listing website, 
 matterport, iphone walkthrough) into interests as short strings. Default package to "signature" \
 if a price is asked but no package named.
 - "new_job": operator wants to create the shoot folders for a booking. Extract realtor (the \
-agent's name), address (the property street address), and date (the shoot date if given, else "").
+agent's name), address (the property street address), and date — but ONLY set date if the message \
+gives an explicit calendar date like "2026-06-27" or "06-27". For weekday or relative words \
+("Friday", "tomorrow", "next week") leave date empty; you do not know today's date.
 - "tour": operator wants to publish, rebuild, or change the status of a property listing tour. \
 Extract tour_target (the address or slug they name) and tour_action: "publish" or "rebuild" to \
 build/republish the page, or "pending"/"sold"/"active"/"coming-soon" to change its status.
@@ -155,14 +158,43 @@ def parse_message(claude: Anthropic, content: str) -> dict:
         output_config={"format": {"type": "json_schema", "schema": PARSE_SCHEMA}},
         messages=[{"role": "user", "content": content}],
     )
+    # A refusal or a truncated (max_tokens) response won't be valid schema JSON.
+    if getattr(resp, "stop_reason", None) in ("refusal", "max_tokens"):
+        return {"intent": "unknown", "confidence": 0.0}
     text = next((b.text for b in resp.content if b.type == "text"), "{}")
     return json.loads(text)
 
 
 # ---------------------------------------------------------------- backends
 
+LOG_FILE = REPO_ROOT / "bot.log"
+
+
+def _log(msg: str) -> None:
+    """Append full detail to bot.log (never shown to Discord)."""
+    try:
+        with open(LOG_FILE, "a", encoding="utf-8") as f:
+            f.write(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] {msg}\n")
+    except Exception:  # noqa: BLE001
+        pass
+
+
+def _scrub(text: str) -> str:
+    """Strip absolute paths / home dir from anything shown in Discord."""
+    t = text.replace(str(REPO_ROOT), "<repo>")
+    try:
+        t = t.replace(str(Path.home()), "~")
+    except Exception:  # noqa: BLE001
+        pass
+    return t
+
+
 def _run(args: list[str], timeout: int = 300) -> tuple[bool, str]:
-    """Run a Python tool in the repo, return (ok, combined_output)."""
+    """Run a Python tool in the repo, return (ok, combined_output).
+
+    Output is for logging only — handlers log it to bot.log and reply with a
+    short status, never the raw output (it can contain absolute paths).
+    """
     try:
         r = subprocess.run(
             [sys.executable, *args],
@@ -195,18 +227,37 @@ def handle_new_job(p: dict) -> tuple[bool, str]:
     address = (p.get("address") or "").strip()
     if not realtor or not address:
         return False, "I need both a **realtor name** and a **property address** to create the job folders."
+    # A leading dash would be parsed as a flag by new-job.py's argparse.
+    if realtor.startswith("-") or address.startswith("-"):
+        return False, "Realtor name and address can't start with a dash."
     args = ["tools/new-job.py", "--realtor", realtor, "--address", address]
     date = (p.get("date") or "").strip()
     if date:
         args += ["--date", date]
     ok, out = _run(args, timeout=60)
+    _log(f"new_job realtor={realtor!r} address={address!r} date={date!r} ok={ok}\n{out}")
     if ok:
-        return True, f"Created shoot folders for **{realtor} — {address}**.\n```\n{out[:1500]}\n```"
-    return False, f"Folder creation failed:\n```\n{out[:1500]}\n```"
+        return True, f"Created shoot folders for **{realtor} — {address}**."
+    return False, "Folder creation failed — check bot.log for details."
+
+
+def _slugify(s: str) -> str:
+    out = "".join(c if c.isalnum() else "-" for c in s.lower())
+    while "--" in out:
+        out = out.replace("--", "-")
+    return out.strip("-")
 
 
 def _resolve_slug(target: str) -> str | None:
-    """Match an address-or-slug against existing properties/<slug>/ folders."""
+    """Match an address-or-slug against existing properties/<slug>/ folders.
+
+    Deliberately strict to avoid false positives — a bare word like "street"
+    or "fort" must NOT resolve to a real listing. Accepts:
+      1. an exact slug                       (e.g. "2719-fort-worth-street")
+      2. a slugified-equal target            (e.g. "2719 Fort Worth Street")
+      3. an address-field containment match, but ONLY when the target contains
+         a street number (a digit) — so generic words can't match.
+    """
     target = (target or "").strip().lower()
     if not target:
         return None
@@ -215,25 +266,21 @@ def _resolve_slug(target: str) -> str | None:
         return None
     candidates = [d.name for d in props.iterdir()
                   if d.is_dir() and (d / "listing.json").exists()]
-    # Exact slug
-    if target in candidates:
+
+    if target in candidates:                       # 1. exact slug
         return target
-    # Slugified address match (drop punctuation, spaces -> hyphens)
-    slugged = "".join(c if c.isalnum() else "-" for c in target)
-    while "--" in slugged:
-        slugged = slugged.replace("--", "-")
-    slugged = slugged.strip("-")
-    for c in candidates:
-        if c == slugged or slugged in c or c in slugged:
-            return c
-    # Address field match inside listing.json
-    for c in candidates:
-        try:
-            data = json.loads((props / c / "listing.json").read_text(encoding="utf-8"))
-            if target in (data.get("address", "").lower()):
-                return c
-        except Exception:  # noqa: BLE001
-            continue
+    slugged = _slugify(target)
+    if slugged in candidates:                        # 2. slugified equality
+        return slugged
+    if any(ch.isdigit() for ch in target):           # 3. address containment (needs a number)
+        for c in candidates:
+            try:
+                data = json.loads((props / c / "listing.json").read_text(encoding="utf-8"))
+                addr = (data.get("address", "") or "").lower()
+                if target in addr or slugged in _slugify(addr):
+                    return c
+            except Exception:  # noqa: BLE001
+                continue
     return None
 
 
@@ -264,10 +311,11 @@ def handle_tour(p: dict) -> tuple[bool, str]:
             return False, f"Couldn't update status on {slug}: {e}"
 
     ok, out = _run(["tools/build-property.py", slug, "--commit"], timeout=300)
+    _log(f"tour slug={slug} action={action} ok={ok}\n{out}")
     verb = f"marked **{_STATUS_DISPLAY[action]}**" if action in _STATUS_DISPLAY else f"**{action}ed**"
     if ok:
-        return True, f"{slug} {verb} and pushed live.\n```\n{out[-1200:]}\n```"
-    return False, f"Build failed for {slug}:\n```\n{out[-1200:]}\n```"
+        return True, f"{slug} {verb} and pushed live."
+    return False, f"Build failed for {slug} — check bot.log for details."
 
 
 def handle_delivery(p: dict) -> str:
@@ -319,6 +367,12 @@ def build_bot(env: dict[str, str], claude: Anthropic) -> discord.Client:
     client = discord.Client(intents=intents)
     channel_id = int(env["DISCORD_BOT_CHANNEL_ID"])
 
+    # Side-effecting intents (write files / git-push) require an allow-listed
+    # author. Read-only intents (quote, delivery) are open to the channel.
+    raw_ids = env.get("DISCORD_ALLOWED_USER_IDS", "")
+    allowed_ids = {int(x) for x in raw_ids.replace(",", " ").split() if x.strip().isdigit()}
+    SIDE_EFFECTING = {"new_job", "tour"}
+
     async def react(msg, emoji):
         try:
             await msg.add_reaction(emoji)
@@ -342,14 +396,14 @@ def build_bot(env: dict[str, str], claude: Anthropic) -> discord.Client:
         if message.channel.id != channel_id:
             return
 
-        import asyncio
         await react(message, "👀")
         try:
             parsed = await asyncio.to_thread(parse_message, claude, message.content)
         except Exception as e:  # noqa: BLE001
+            _log(f"parser error: {type(e).__name__}: {e}")
             await unreact(message, "👀")
             await react(message, "❌")
-            await message.reply(f"Parser error:\n```\n{type(e).__name__}: {e}\n```"[:1900])
+            await message.reply("Couldn't parse that — check bot.log. Try rephrasing.")
             return
 
         intent = parsed.get("intent", "unknown")
@@ -361,11 +415,27 @@ def build_bot(env: dict[str, str], claude: Anthropic) -> discord.Client:
             await message.reply(
                 "Not sure what you need. Try:\n"
                 "• `quote a 2,400 sqft premier shoot with twilight`\n"
-                "• `new job, Jane Smith, 123 Bayshore Rd, shoot Friday`\n"
+                "• `new job, Jane Smith, 123 Bayshore Rd, shoot 6-27`\n"
                 "• `publish 2719 fort worth st` / `mark 2719 fort worth st sold`\n"
                 "• `delivery for 2719, gallery <link>, video <link>`"
             )
             return
+
+        # Authorization gate for actions that write files or push to git.
+        if intent in SIDE_EFFECTING:
+            if not allowed_ids:
+                await unreact(message, "👀")
+                await react(message, "🔒")
+                await message.reply(
+                    "That action changes files / publishes, so it's locked. Add your Discord "
+                    "user ID to `DISCORD_ALLOWED_USER_IDS` in `.discord_bot.env` and restart the bot."
+                )
+                return
+            if message.author.id not in allowed_ids:
+                await unreact(message, "👀")
+                await react(message, "🔒")
+                await message.reply("You're not authorized to run that action.")
+                return
 
         try:
             if intent == "quote":
@@ -379,12 +449,13 @@ def build_bot(env: dict[str, str], claude: Anthropic) -> discord.Client:
             else:
                 ok, reply = False, "Unhandled intent."
         except Exception as e:  # noqa: BLE001
-            ok, reply = False, f"Handler error:\n```\n{type(e).__name__}: {e}\n```"
+            _log(f"handler error ({intent}): {type(e).__name__}: {e}")
+            ok, reply = False, "Something went wrong running that — check bot.log."
 
         await unreact(message, "👀")
         await react(message, "✅" if ok else "❌")
-        # Discord hard-limits messages to 2000 chars.
-        await message.reply(reply[:1990])
+        # Scrub absolute paths, then respect Discord's 2000-char limit.
+        await message.reply(_scrub(reply)[:1990])
 
     return client
 

@@ -514,6 +514,21 @@ def _commit_and_push(slugs: list[str]) -> None:
     """
     import subprocess
 
+    # Cloudflare deploys from main. We commit onto the current branch but push
+    # to main — so refuse to publish from any other branch rather than pushing
+    # a stale/divergent main (which would deploy the wrong tree, or fail).
+    branch = subprocess.run(
+        ["git", "rev-parse", "--abbrev-ref", "HEAD"],
+        cwd=ROOT, capture_output=True, text=True,
+    ).stdout.strip()
+    if branch != "main":
+        print(
+            f"Refusing to --commit: on branch '{branch}', not 'main'. "
+            "Switch to main before publishing (the bot host must stay on main).",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
     paths_to_stage = [
         "properties/index.html",
         "sitemap.xml",

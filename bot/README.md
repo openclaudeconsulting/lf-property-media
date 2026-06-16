@@ -52,7 +52,14 @@ Then edit `.discord_bot.env`:
 ```
 DISCORD_BOT_TOKEN=the-token-from-step-2
 DISCORD_BOT_CHANNEL_ID=the-channel-id-from-step-2
+DISCORD_ALLOWED_USER_IDS=your-discord-user-id
 ```
+
+`DISCORD_ALLOWED_USER_IDS` controls who can run the **side-effecting** actions
+(new job, publish/update tour — they write files and git-push). Quote and
+delivery work for anyone in the channel. Put your own Discord user ID here
+(enable Developer Mode → right-click your name → Copy User ID); separate
+multiple IDs with commas. If it's left blank, the locked actions refuse to run.
 
 And create `.anthropic_api_key` containing your Claude API key on one line
 (starts with `sk-ant-`). Get one at <https://console.anthropic.com>.

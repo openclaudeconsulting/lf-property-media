@@ -62,7 +62,11 @@ def _bot_heartbeat_age() -> float | None:
         return None
 
 
+MAX_BACKOFF_SECONDS = 600  # cap so a permanent misconfig doesn't hot-loop
+
+
 def run_bot_loop() -> None:
+    consecutive_fast = 0  # exits that happened before the startup grace window
     while True:
         log("Starting discord_bot.py ...")
         try:
@@ -81,7 +85,7 @@ def run_bot_loop() -> None:
         while True:
             ret = proc.poll()
             if ret is not None:
-                log(f"discord_bot.py exited with code {ret}. Restarting in {RESTART_DELAY_SECONDS}s ...")
+                log(f"discord_bot.py exited with code {ret}.")
                 break
             if time.time() - started > STARTUP_GRACE_SECONDS:
                 age = _bot_heartbeat_age()
@@ -95,7 +99,22 @@ def run_bot_loop() -> None:
                     break
             time.sleep(5)
 
-        time.sleep(RESTART_DELAY_SECONDS)
+        # A bot that dies before the grace window is almost always a permanent
+        # misconfig (bad token/key, missing dep). Back off instead of hot-looping.
+        ran_for = time.time() - started
+        if ran_for < STARTUP_GRACE_SECONDS:
+            consecutive_fast += 1
+        else:
+            consecutive_fast = 0
+
+        if consecutive_fast >= 3:
+            delay = min(MAX_BACKOFF_SECONDS, RESTART_DELAY_SECONDS * (2 ** (consecutive_fast - 2)))
+            log(f"{consecutive_fast} fast exits in a row — likely a config problem "
+                f"(check .discord_bot.env / .anthropic_api_key and bot.log). Backing off {delay}s.")
+        else:
+            delay = RESTART_DELAY_SECONDS
+        log(f"Restarting in {delay}s ...")
+        time.sleep(delay)
 
 
 def main() -> None:
