@@ -179,6 +179,54 @@
     .scroll-cue { animation: none; }
   }
 
+  /* ============ FACTS PANEL (MLS data sheet) ============ */
+  .facts-stats {
+    display: grid; grid-template-columns: repeat(6, 1fr);
+    gap: 1px; background: var(--border);
+    border: 1px solid var(--border); border-radius: 7px; overflow: hidden;
+    margin-bottom: 42px;
+  }
+  @media (max-width: 1000px) { .facts-stats { grid-template-columns: repeat(3, 1fr); } }
+  @media (max-width: 560px)  { .facts-stats { grid-template-columns: repeat(2, 1fr); } }
+  .fstat { background: var(--white); padding: 22px 20px; display: flex; flex-direction: column; }
+  .fstat .v { font-family: var(--serif); font-weight: 500; font-size: clamp(23px, 2.8vw, 31px); line-height: 1; color: var(--ink); letter-spacing: -0.01em; }
+  .fstat .l { font-size: 10.5px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--faint); margin-top: 11px; font-weight: 600; }
+  .fstat .sub { font-size: 12px; color: var(--muted); margin-top: 5px; line-height: 1.35; }
+
+  .facts-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px 48px; }
+  @media (max-width: 1000px) { .facts-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 620px)  { .facts-grid { grid-template-columns: 1fr; } }
+  .fgroup { break-inside: avoid; padding-bottom: 6px; }
+  .fgroup h3, .fgroup-h {
+    font-family: var(--sans); font-size: 11.5px; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--sand); font-weight: 700;
+    padding-bottom: 12px; margin-bottom: 4px; border-bottom: 1px solid var(--border);
+  }
+  .frow { display: flex; justify-content: space-between; gap: 18px; padding: 9px 0; border-bottom: 1px solid var(--border); font-size: 13.5px; line-height: 1.45; }
+  .frow:last-child { border-bottom: 0; }
+  .frow .k { color: var(--muted); flex-shrink: 0; }
+  .frow .v { color: var(--ink-soft); text-align: right; font-weight: 500; }
+
+  .fupdates { margin-top: 46px; }
+  .fupdates-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 2px 28px; margin-top: 16px; }
+  .fupd { display: flex; align-items: baseline; gap: 13px; font-size: 13.5px; padding: 9px 0; border-bottom: 1px solid var(--border); }
+  .fupd .yr { font-family: var(--serif); color: var(--sand); font-size: 16px; min-width: 58px; font-variant-numeric: tabular-nums; }
+  .fupd .it { color: var(--ink-soft); }
+
+  .facts-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin-top: 44px; padding-top: 30px; border-top: 1px solid var(--border); }
+  .fbtn {
+    display: inline-flex; align-items: center; gap: 9px; cursor: pointer;
+    font-family: var(--sans); font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 12px 20px; border-radius: 100px; border: 1px solid var(--ink); background: transparent; color: var(--ink);
+    transition: background .2s ease, color .2s ease, border-color .2s ease;
+  }
+  .fbtn:hover { background: var(--ink); color: var(--white); }
+  .fbtn svg { width: 15px; height: 15px; }
+  .fbtn.sand { background: var(--sand); border-color: var(--sand); color: var(--white); }
+  .fbtn.sand:hover { background: var(--sand-dark); border-color: var(--sand-dark); }
+  .fsource { margin-left: auto; font-size: 11.5px; color: var(--faint); letter-spacing: 0.04em; text-align: right; }
+  .fdisc { font-size: 11px; color: var(--faint); line-height: 1.7; margin-top: 20px; max-width: 78ch; }
+
   /* ============ FOOTER ============ */
   .foot { background: var(--ink); color: rgba(255,255,255,0.72); margin-top: 80px; padding: 76px 44px 36px; }
   .foot-inner { max-width: 1500px; margin: 0 auto; }
@@ -215,6 +263,17 @@
     .foot { padding: 56px 22px 30px; } .foot-contact { text-align: left; }
     .lb-nav { width: 44px; height: 44px; } .lb-prev { left: 10px; } .lb-next { right: 10px; }
     .lb-img { max-width: 94vw; }
+  }
+
+  /* ============ PRINT — facts data sheet only ============ */
+  @media print {
+    .hero, .nav, .scroll-cue, .foot, .lb, .facts-actions { display: none !important; }
+    .section:not(.facts) { display: none !important; }
+    main { max-width: none; padding: 0; }
+    .facts { padding-top: 0; }
+    .facts-stats { border-radius: 0; }
+    body { background: #fff; }
+    .frow, .fupd, .fstat { break-inside: avoid; }
   }
 </style>
 </head>
@@ -253,7 +312,220 @@
   </nav>
 
   <!-- ===================== SECTIONS ===================== -->
-  <main id="main"></main>
+  <!--       <section class="section facts" id="facts">
+        <div class="sec-head">
+          <div class="l"><span class="sec-num">00</span><h2 class="sec-title">Property Info</h2><span class="sec-sub">The full listing data sheet</span></div>
+          <span class="sec-count">A4696731</span>
+        </div>
+        <div class="facts-stats">
+        <div class="fstat"><span class="v">$725,000</span><span class="l">List Price</span><span class="sub">$339 / sq ft</span></div>
+        <div class="fstat"><span class="v">4</span><span class="l">Bedrooms</span><span class="sub">Bonus room w/ closet = flexible 5th</span></div>
+        <div class="fstat"><span class="v">2.5</span><span class="l">Bathrooms</span><span class="sub">2 full · 1 half</span></div>
+        <div class="fstat"><span class="v">2,140</span><span class="l">Heated Sq Ft</span><span class="sub">3,188 under roof</span></div>
+        <div class="fstat"><span class="v">0.25 ac</span><span class="l">Lot Size</span><span class="sub">10,750 sq ft</span></div>
+        <div class="fstat"><span class="v">1958</span><span class="l">Year Built</span><span class="sub">Mid-Century Modern</span></div>
+        </div>
+        <div class="facts-grid">
+        <div class="fgroup">
+          <h3>Overview</h3>
+          <div class="frow"><span class="k">Status</span><span class="v">Active</span></div>
+          <div class="frow"><span class="k">Property type</span><span class="v">Single Family Residence</span></div>
+          <div class="frow"><span class="k">Style</span><span class="v">Mid-Century Modern</span></div>
+          <div class="frow"><span class="k">Levels</span><span class="v">Multi/Split</span></div>
+          <div class="frow"><span class="k">Stories</span><span class="v">2</span></div>
+          <div class="frow"><span class="k">Total rooms</span><span class="v">12</span></div>
+          <div class="frow"><span class="k">Days on market</span><span class="v">25</span></div>
+          <div class="frow"><span class="k">Listed</span><span class="v">June 12, 2026</span></div>
+          <div class="frow"><span class="k">MLS #</span><span class="v">A4696731</span></div>
+        </div>
+        <div class="fgroup">
+          <h3>Interior</h3>
+          <div class="frow"><span class="k">Bedrooms</span><span class="v">4</span></div>
+          <div class="frow"><span class="k">Bathrooms</span><span class="v">2.5</span></div>
+          <div class="frow"><span class="k">Flooring</span><span class="v">Carpet · Tile · Hardwood</span></div>
+          <div class="frow"><span class="k">Fireplace</span><span class="v">Free-standing, wood-burning</span></div>
+          <div class="frow"><span class="k">Appliances</span><span class="v">Cooktop · Dishwasher · Dryer · Microwave · Washer</span></div>
+          <div class="frow"><span class="k">Laundry</span><span class="v">In Garage</span></div>
+          <div class="frow"><span class="k">Furnished</span><span class="v">Negotiable</span></div>
+          <div class="frow"><span class="k">Features</span><span class="v">Ceiling Fan(s) · Eating Space In Kitchen · High Ceilings · Kitchen/Family Room Combo · Living Room/Dining Room Combo · Primary Bedroom Main Floor · Solid Surface Counters</span></div>
+        </div>
+        <div class="fgroup">
+          <h3>Systems &amp; Construction</h3>
+          <div class="frow"><span class="k">Heating</span><span class="v">Central</span></div>
+          <div class="frow"><span class="k">Cooling</span><span class="v">Central Air · Wall/Window Unit(s)</span></div>
+          <div class="frow"><span class="k">Roof</span><span class="v">Metal</span></div>
+          <div class="frow"><span class="k">Construction</span><span class="v">Block · Wood Siding</span></div>
+          <div class="frow"><span class="k">Foundation</span><span class="v">Crawlspace · Slab</span></div>
+          <div class="frow"><span class="k">Sewer</span><span class="v">Public Sewer</span></div>
+          <div class="frow"><span class="k">Water</span><span class="v">Public</span></div>
+          <div class="frow"><span class="k">Utilities</span><span class="v">Electricity Connected · Public · Sewer Connected · Underground Utilities</span></div>
+        </div>
+        <div class="fgroup">
+          <h3>Exterior &amp; Outdoor</h3>
+          <div class="frow"><span class="k">Pool</span><span class="v">Private · Heated · In-Ground</span></div>
+          <div class="frow"><span class="k">Spa</span><span class="v">Heated · In-Ground</span></div>
+          <div class="frow"><span class="k">Garage</span><span class="v">2-car attached</span></div>
+          <div class="frow"><span class="k">Carport</span><span class="v">No</span></div>
+          <div class="frow"><span class="k">Patio / porch</span><span class="v">Covered · Front Porch · Rear Porch · Screened</span></div>
+          <div class="frow"><span class="k">Exterior</span><span class="v">Sliding Doors</span></div>
+          <div class="frow"><span class="k">Waterfront</span><span class="v">No</span></div>
+          <div class="frow"><span class="k">Water view</span><span class="v">No</span></div>
+        </div>
+        <div class="fgroup">
+          <h3>Financial</h3>
+          <div class="frow"><span class="k">List price</span><span class="v">$725,000</span></div>
+          <div class="frow"><span class="k">Price / sq ft</span><span class="v">$339/sf heated · $227/sf total</span></div>
+          <div class="frow"><span class="k">Annual taxes</span><span class="v">$4,002 (2025)</span></div>
+          <div class="frow"><span class="k">HOA</span><span class="v">None</span></div>
+          <div class="frow"><span class="k">CDD</span><span class="v">None</span></div>
+          <div class="frow"><span class="k">Ownership</span><span class="v">Fee Simple</span></div>
+          <div class="frow"><span class="k">Terms</span><span class="v">Cash · Conventional · FHA · VA Loan</span></div>
+        </div>
+        <div class="fgroup">
+          <h3>Location &amp; Legal</h3>
+          <div class="frow"><span class="k">County</span><span class="v">Sarasota</span></div>
+          <div class="frow"><span class="k">Subdivision</span><span class="v">Sarasota Highlands</span></div>
+          <div class="frow"><span class="k">MLS area</span><span class="v">34231 — Sarasota/Gulf Gate Branch</span></div>
+          <div class="frow"><span class="k">Zoning</span><span class="v">RSF2</span></div>
+          <div class="frow"><span class="k">Flood zone</span><span class="v">X</span></div>
+          <div class="frow"><span class="k">Facing</span><span class="v">South</span></div>
+          <div class="frow"><span class="k">Lot size</span><span class="v">10,750 sq ft · 0.25 ac</span></div>
+          <div class="frow"><span class="k">Lot dimensions</span><span class="v">75 × 108</span></div>
+          <div class="frow"><span class="k">Parcel / legal</span><span class="v">S 2 1/2 FT OF LOTS 4 5 &amp; ALL OF LOTS 34 &amp; 35 LESS S 5 FT FOR RD BLK A SARASOTA HIGHLANDS</span></div>
+        </div>
+        </div>
+      <div class="fupdates">
+        <h3 class="fgroup-h">Recent Updates</h3>
+        <div class="fupdates-list">
+          <div class="fupd"><span class="yr">2020</span><span class="it">Kitchen upgrade</span></div>
+          <div class="fupd"><span class="yr">2016</span><span class="it">Central A/C</span></div>
+          <div class="fupd"><span class="yr">2021</span><span class="it">Air handler</span></div>
+          <div class="fupd"><span class="yr">2026</span><span class="it">Water heater</span></div>
+          <div class="fupd"><span class="yr">2017</span><span class="it">Upstairs A/C unit</span></div>
+          <div class="fupd"><span class="yr">2016</span><span class="it">Pool heater</span></div>
+          <div class="fupd"><span class="yr">2018</span><span class="it">Pool pump</span></div>
+          <div class="fupd"><span class="yr">2020</span><span class="it">Termite tenting &amp; treatment</span></div>
+          <div class="fupd"><span class="yr">2019</span><span class="it">Metal roof resealed</span></div>
+          <div class="fupd"><span class="yr">recent</span><span class="it">Privacy fencing</span></div>
+        </div>
+      </div>
+        <div class="facts-actions">
+        <a class="fbtn sand" href="https://app.cloudpano.com/tours/PLQcqRfKBo?mls=1" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M23 7l-7 5 7 5V7zM1 5h15v14H1z"/></svg><span class="lbl">3D Virtual Tour</span></a>
+        <button class="fbtn" id="copyFacts" type="button" data-copy="2719 Fort Worth Street, Sarasota, FL 34231&#10;$725,000 · MLS A4696731 (Stellar MLS) · Active&#10;4 bd · 2.5 ba · 2,140 sqft heated (3,188 under roof) · ~$339/sqft&#10;Lot 10,750 sqft (0.25 ac) · Built 1958 · Mid-Century Modern&#10;Taxes $4,002 (2025) · No HOA · No CDD · Fee Simple&#10;Pool: Private · Heated · In-Ground&#10;Virtual tour: https://app.cloudpano.com/tours/PLQcqRfKBo?mls=1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><span class="lbl">Copy MLS Facts</span></button>
+        <button class="fbtn" id="printFacts" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z"/></svg><span class="lbl">Print Sheet</span></button>
+        <span class="fsource">MLS A4696731 · Stellar MLS · Listed by Preferred Shore LLC</span>
+        </div>
+      <p class="fdisc">Listing data sourced from Stellar MLS via the listing brokerage, deemed reliable but not guaranteed. LF Property Media is the listing photographer, not the listing agent — verify all details independently.</p>
+      </section> renders the MLS data sheet (section 00) when listing.json
+       has a "facts" block; empty for photo-only tours. Photo-tour sections are
+       appended after it by the script below. -->
+  <main id="main">
+      <section class="section facts" id="facts">
+        <div class="sec-head">
+          <div class="l"><span class="sec-num">00</span><h2 class="sec-title">Property Info</h2><span class="sec-sub">The full listing data sheet</span></div>
+          <span class="sec-count">A4696731</span>
+        </div>
+        <div class="facts-stats">
+        <div class="fstat"><span class="v">$725,000</span><span class="l">List Price</span><span class="sub">$339 / sq ft</span></div>
+        <div class="fstat"><span class="v">4</span><span class="l">Bedrooms</span><span class="sub">Bonus room w/ closet = flexible 5th</span></div>
+        <div class="fstat"><span class="v">2.5</span><span class="l">Bathrooms</span><span class="sub">2 full · 1 half</span></div>
+        <div class="fstat"><span class="v">2,140</span><span class="l">Heated Sq Ft</span><span class="sub">3,188 under roof</span></div>
+        <div class="fstat"><span class="v">0.25 ac</span><span class="l">Lot Size</span><span class="sub">10,750 sq ft</span></div>
+        <div class="fstat"><span class="v">1958</span><span class="l">Year Built</span><span class="sub">Mid-Century Modern</span></div>
+        </div>
+        <div class="facts-grid">
+        <div class="fgroup">
+          <h3>Overview</h3>
+          <div class="frow"><span class="k">Status</span><span class="v">Active</span></div>
+          <div class="frow"><span class="k">Property type</span><span class="v">Single Family Residence</span></div>
+          <div class="frow"><span class="k">Style</span><span class="v">Mid-Century Modern</span></div>
+          <div class="frow"><span class="k">Levels</span><span class="v">Multi/Split</span></div>
+          <div class="frow"><span class="k">Stories</span><span class="v">2</span></div>
+          <div class="frow"><span class="k">Total rooms</span><span class="v">12</span></div>
+          <div class="frow"><span class="k">Days on market</span><span class="v">25</span></div>
+          <div class="frow"><span class="k">Listed</span><span class="v">June 12, 2026</span></div>
+          <div class="frow"><span class="k">MLS #</span><span class="v">A4696731</span></div>
+        </div>
+        <div class="fgroup">
+          <h3>Interior</h3>
+          <div class="frow"><span class="k">Bedrooms</span><span class="v">4</span></div>
+          <div class="frow"><span class="k">Bathrooms</span><span class="v">2.5</span></div>
+          <div class="frow"><span class="k">Flooring</span><span class="v">Carpet · Tile · Hardwood</span></div>
+          <div class="frow"><span class="k">Fireplace</span><span class="v">Free-standing, wood-burning</span></div>
+          <div class="frow"><span class="k">Appliances</span><span class="v">Cooktop · Dishwasher · Dryer · Microwave · Washer</span></div>
+          <div class="frow"><span class="k">Laundry</span><span class="v">In Garage</span></div>
+          <div class="frow"><span class="k">Furnished</span><span class="v">Negotiable</span></div>
+          <div class="frow"><span class="k">Features</span><span class="v">Ceiling Fan(s) · Eating Space In Kitchen · High Ceilings · Kitchen/Family Room Combo · Living Room/Dining Room Combo · Primary Bedroom Main Floor · Solid Surface Counters</span></div>
+        </div>
+        <div class="fgroup">
+          <h3>Systems &amp; Construction</h3>
+          <div class="frow"><span class="k">Heating</span><span class="v">Central</span></div>
+          <div class="frow"><span class="k">Cooling</span><span class="v">Central Air · Wall/Window Unit(s)</span></div>
+          <div class="frow"><span class="k">Roof</span><span class="v">Metal</span></div>
+          <div class="frow"><span class="k">Construction</span><span class="v">Block · Wood Siding</span></div>
+          <div class="frow"><span class="k">Foundation</span><span class="v">Crawlspace · Slab</span></div>
+          <div class="frow"><span class="k">Sewer</span><span class="v">Public Sewer</span></div>
+          <div class="frow"><span class="k">Water</span><span class="v">Public</span></div>
+          <div class="frow"><span class="k">Utilities</span><span class="v">Electricity Connected · Public · Sewer Connected · Underground Utilities</span></div>
+        </div>
+        <div class="fgroup">
+          <h3>Exterior &amp; Outdoor</h3>
+          <div class="frow"><span class="k">Pool</span><span class="v">Private · Heated · In-Ground</span></div>
+          <div class="frow"><span class="k">Spa</span><span class="v">Heated · In-Ground</span></div>
+          <div class="frow"><span class="k">Garage</span><span class="v">2-car attached</span></div>
+          <div class="frow"><span class="k">Carport</span><span class="v">No</span></div>
+          <div class="frow"><span class="k">Patio / porch</span><span class="v">Covered · Front Porch · Rear Porch · Screened</span></div>
+          <div class="frow"><span class="k">Exterior</span><span class="v">Sliding Doors</span></div>
+          <div class="frow"><span class="k">Waterfront</span><span class="v">No</span></div>
+          <div class="frow"><span class="k">Water view</span><span class="v">No</span></div>
+        </div>
+        <div class="fgroup">
+          <h3>Financial</h3>
+          <div class="frow"><span class="k">List price</span><span class="v">$725,000</span></div>
+          <div class="frow"><span class="k">Price / sq ft</span><span class="v">$339/sf heated · $227/sf total</span></div>
+          <div class="frow"><span class="k">Annual taxes</span><span class="v">$4,002 (2025)</span></div>
+          <div class="frow"><span class="k">HOA</span><span class="v">None</span></div>
+          <div class="frow"><span class="k">CDD</span><span class="v">None</span></div>
+          <div class="frow"><span class="k">Ownership</span><span class="v">Fee Simple</span></div>
+          <div class="frow"><span class="k">Terms</span><span class="v">Cash · Conventional · FHA · VA Loan</span></div>
+        </div>
+        <div class="fgroup">
+          <h3>Location &amp; Legal</h3>
+          <div class="frow"><span class="k">County</span><span class="v">Sarasota</span></div>
+          <div class="frow"><span class="k">Subdivision</span><span class="v">Sarasota Highlands</span></div>
+          <div class="frow"><span class="k">MLS area</span><span class="v">34231 — Sarasota/Gulf Gate Branch</span></div>
+          <div class="frow"><span class="k">Zoning</span><span class="v">RSF2</span></div>
+          <div class="frow"><span class="k">Flood zone</span><span class="v">X</span></div>
+          <div class="frow"><span class="k">Facing</span><span class="v">South</span></div>
+          <div class="frow"><span class="k">Lot size</span><span class="v">10,750 sq ft · 0.25 ac</span></div>
+          <div class="frow"><span class="k">Lot dimensions</span><span class="v">75 × 108</span></div>
+          <div class="frow"><span class="k">Parcel / legal</span><span class="v">S 2 1/2 FT OF LOTS 4 5 &amp; ALL OF LOTS 34 &amp; 35 LESS S 5 FT FOR RD BLK A SARASOTA HIGHLANDS</span></div>
+        </div>
+        </div>
+      <div class="fupdates">
+        <h3 class="fgroup-h">Recent Updates</h3>
+        <div class="fupdates-list">
+          <div class="fupd"><span class="yr">2020</span><span class="it">Kitchen upgrade</span></div>
+          <div class="fupd"><span class="yr">2016</span><span class="it">Central A/C</span></div>
+          <div class="fupd"><span class="yr">2021</span><span class="it">Air handler</span></div>
+          <div class="fupd"><span class="yr">2026</span><span class="it">Water heater</span></div>
+          <div class="fupd"><span class="yr">2017</span><span class="it">Upstairs A/C unit</span></div>
+          <div class="fupd"><span class="yr">2016</span><span class="it">Pool heater</span></div>
+          <div class="fupd"><span class="yr">2018</span><span class="it">Pool pump</span></div>
+          <div class="fupd"><span class="yr">2020</span><span class="it">Termite tenting &amp; treatment</span></div>
+          <div class="fupd"><span class="yr">2019</span><span class="it">Metal roof resealed</span></div>
+          <div class="fupd"><span class="yr">recent</span><span class="it">Privacy fencing</span></div>
+        </div>
+      </div>
+        <div class="facts-actions">
+        <a class="fbtn sand" href="https://app.cloudpano.com/tours/PLQcqRfKBo?mls=1" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M23 7l-7 5 7 5V7zM1 5h15v14H1z"/></svg><span class="lbl">3D Virtual Tour</span></a>
+        <button class="fbtn" id="copyFacts" type="button" data-copy="2719 Fort Worth Street, Sarasota, FL 34231&#10;$725,000 · MLS A4696731 (Stellar MLS) · Active&#10;4 bd · 2.5 ba · 2,140 sqft heated (3,188 under roof) · ~$339/sqft&#10;Lot 10,750 sqft (0.25 ac) · Built 1958 · Mid-Century Modern&#10;Taxes $4,002 (2025) · No HOA · No CDD · Fee Simple&#10;Pool: Private · Heated · In-Ground&#10;Virtual tour: https://app.cloudpano.com/tours/PLQcqRfKBo?mls=1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><span class="lbl">Copy MLS Facts</span></button>
+        <button class="fbtn" id="printFacts" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z"/></svg><span class="lbl">Print Sheet</span></button>
+        <span class="fsource">MLS A4696731 · Stellar MLS · Listed by Preferred Shore LLC</span>
+        </div>
+      <p class="fdisc">Listing data sourced from Stellar MLS via the listing brokerage, deemed reliable but not guaranteed. LF Property Media is the listing photographer, not the listing agent — verify all details independently.</p>
+      </section>
+  </main>
 
   <!-- ===================== FOOTER ===================== -->
   <footer class="foot">
@@ -312,6 +584,15 @@
     // Build nav + sections
     const navLinks = document.getElementById('navLinks');
     const main = document.getElementById('main');
+
+    // If the MLS facts panel is present (section 00), give it the first nav slot.
+    if (document.getElementById('facts')) {
+      const fa = document.createElement('a');
+      fa.className = 'nav-link'; fa.href = '#facts'; fa.dataset.sec = 'facts';
+      fa.innerHTML = '<span class="nn">00</span>Info';
+      navLinks.appendChild(fa);
+    }
+
     TOUR.forEach((s, si) => {
       const a = document.createElement('a');
       a.className = 'nav-link'; a.href = '#' + s.id; a.dataset.sec = s.id;
@@ -402,6 +683,31 @@
       const dx = e.changedTouches[0].clientX - tx;
       if (Math.abs(dx) > 50) show(cur + (dx < 0 ? 1 : -1));
     }, { passive: true });
+
+    // ===== Facts panel: copy + print (agent utilities) =====
+    const copyBtn = document.getElementById('copyFacts');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', async () => {
+        const txt = copyBtn.dataset.copy || '';
+        try {
+          await navigator.clipboard.writeText(txt);
+        } catch (err) {
+          const ta = document.createElement('textarea');
+          ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0';
+          document.body.appendChild(ta); ta.select();
+          try { document.execCommand('copy'); } catch (e) {}
+          ta.remove();
+        }
+        const lbl = copyBtn.querySelector('.lbl');
+        if (lbl) {
+          const prev = lbl.textContent;
+          lbl.textContent = 'Copied';
+          setTimeout(() => { lbl.textContent = prev; }, 1600);
+        }
+      });
+    }
+    const printBtn = document.getElementById('printFacts');
+    if (printBtn) printBtn.addEventListener('click', () => window.print());
 
     // Year
     document.getElementById('yr').textContent = new Date().getFullYear();
