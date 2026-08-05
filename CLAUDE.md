@@ -2,6 +2,17 @@
 
 This file is auto-loaded by Claude Code. It orients you without needing to re-read every file.
 
+## File & folder location policy — READ FIRST, STRICT
+
+**The one canonical folder for this project is `C:\Project Claude\LF Propery Media`** ("Propery" is the real spelling). Every file for LF Property Media lives there — the git repo included.
+
+- **Never** save anything — data, job folders, generated output, test artifacts, scratch files, git worktrees, temp dirs — to `Downloads`, the user's home folder (`C:\Users\joshu`), the system temp dir, or anywhere outside the `C:\Project Claude\` network. The owner keeps every Claude project as its own subfolder under `C:\Project Claude\`; stray files elsewhere break that filing system.
+- **Job/photo data** lives under `C:\Project Claude\LF Propery Media\Filing System\` (this is `LF_JOBS_BASE`).
+- If a task needs scratch/temp space, create it **inside the project folder** and clean it up — not `%TEMP%` or Downloads.
+- **Bulk media stays out of git.** Job archives, drive dumps, raw 360 brackets and video live in this folder but are gitignored, and `.assetsignore` keeps client folders off the Cloudflare deploy. Adding new bulk media means adding an ignore rule for it.
+
+> Resolved 2026-08-05: the repo previously lived at `C:\Users\joshu\Downloads\LF Gallery` with its working files in a second, older copy here. The two were merged and the repo moved into this folder. If a Claude session ever reports its working directory as anything other than `C:\Project Claude\LF Propery Media`, stop and surface it before writing files.
+
 ## What this is
 
 A static marketing website for **LF Property Media**, a real estate photography studio based in Sarasota, Florida. Single focus:
