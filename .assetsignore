@@ -8,3 +8,8 @@ CLAUDE.md
 README.md
 *.stl
 Dallas*.stl
+
+# LF client job folders — never publish these to the live site
+Filing System/
+Real Estate/
+Final/

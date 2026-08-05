@@ -64,9 +64,18 @@ def sanitize(name: str) -> str:
     return cleaned
 
 
+# Business suffixes that should stay all-caps in a folder name — brokerage names
+# like "Preferred Shore LLC" land in the realtor slot often.
+_NAME_ACRONYMS = {"LLC", "INC", "LLP", "PLLC", "PA", "PC", "CO", "MLS"}
+
+
 def realtor_folder(raw: str) -> str:
-    """Title-case the realtor's name for a tidy, consistent folder."""
-    return sanitize(" ".join(w.capitalize() for w in raw.split()))
+    """Title-case the realtor's name for a tidy, consistent folder.
+
+    Known business acronyms (LLC, INC, ...) keep their capitalization.
+    """
+    words = [w if w.upper() in _NAME_ACRONYMS else w.capitalize() for w in raw.split()]
+    return sanitize(" ".join(words))
 
 
 def address_folder(raw: str, words: int = ADDRESS_WORDS) -> str:

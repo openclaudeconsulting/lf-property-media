@@ -43,3 +43,22 @@ __pycache__/
 # Unrelated files that happen to live in the working folder
 Dallas*.stl
 *.stl
+
+# Client job data and bulk media living alongside the site in
+# C:\Project Claude\LF Propery Media. These are the working library, not
+# site content -- keep every one of them out of git and off the deploy.
+Filing System/
+FLPM Drive/
+FLPM Drive.zip
+Pitch decks/
+Raw Bracketed insta 360 pics/
+drive-download-*.zip
+*.mp4
+*.mov
+*.insp
+*.insv
+
+# Loose downloads that accumulate in the project root
+Screenshot *.png
+hcrgI.jpg
+6869*.jpg
