@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>2719 Fort Worth Street — 360 Tour · LF Property Media</title>
+<meta name="description" content="Interactive 360 walkthrough of 2719 Fort Worth Street, Sarasota, Florida. Photography by LF Property Media." />
+
+<link rel="icon" href="/images/favicon.svg" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@photo-sphere-viewer/core@5.15.1/index.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@photo-sphere-viewer/markers-plugin@5.15.1/index.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@photo-sphere-viewer/virtual-tour-plugin@5.15.1/index.css" />
+
+<style>
+  :root{
+    --lf-paper:#faf8f5; --lf-white:#fff; --lf-cream:#f3ede2;
+    --lf-ink:#1a1a1a; --lf-ink-soft:#2b2b2b; --lf-muted:#6b6b6b;
+    --lf-sand:#b08968; --lf-sand-dark:#8c6a4e; --lf-sand-light:#d4b896; --lf-sand-soft:#ede2d1;
+    --lf-border:#e8e2d5;
+
+    --font-display:"Playfair Display",Georgia,serif;
+    --font-body:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+
+    /* Layered, sand-tinted shadows -- never a flat grey drop. */
+    --lift-1:0 1px 2px rgba(38,26,16,.16), 0 2px 8px rgba(38,26,16,.10);
+    --lift-2:0 2px 4px rgba(38,26,16,.18), 0 8px 24px rgba(38,26,16,.16), 0 16px 48px rgba(38,26,16,.10);
+    --lift-3:0 4px 8px rgba(38,26,16,.22), 0 16px 40px rgba(38,26,16,.22), 0 32px 80px rgba(38,26,16,.14);
+
+    --ease-spring:cubic-bezier(.34,1.42,.48,1);
+    --ease-out:cubic-bezier(.22,.68,.36,1);
+
+    --space-1:.375rem; --space-2:.625rem; --space-3:1rem;
+    --space-4:1.5rem; --space-5:2.25rem;
+
+    --rail-h:104px;
+  }
+
+  *,*::before,*::after{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0; background:var(--lf-ink); color:var(--lf-paper);
+    font-family:var(--font-body); -webkit-font-smoothing:antialiased;
+    overflow:hidden; overscroll-behavior:none;
+  }
+  button{font:inherit;color:inherit;}
+
+  /* ---------------------------------------------------------------- stage */
+  #stage{position:fixed; inset:0 0 var(--rail-h) 0; background:#0d0b09;}
+  .psv-container{background:#0d0b09;}
+
+  /* Grain + vignette so the frame reads as a photographic surface, not a canvas. */
+  #stage::after{
+    content:""; position:absolute; inset:0; pointer-events:none; z-index:2;
+    background:
+      radial-gradient(120% 90% at 50% 42%, transparent 52%, rgba(10,7,4,.42) 100%),
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.82' numOctaves='3'/><feColorMatrix type='saturate' values='0'/></filter><rect width='140' height='140' filter='url(%23n)' opacity='.16'/></svg>");
+    mix-blend-mode:multiply;
+  }
+
+  /* ------------------------------------------------------------- topbar */
+  .topbar{
+    position:fixed; top:0; left:0; right:0; z-index:20;
+    display:flex; align-items:flex-start; justify-content:space-between; gap:var(--space-3);
+    padding:var(--space-4) var(--space-4) var(--space-5);
+    pointer-events:none;
+    background:linear-gradient(to bottom,rgba(12,9,6,.78) 0%,rgba(12,9,6,.42) 55%,transparent 100%);
+  }
+  .brand{display:flex; align-items:center; gap:var(--space-3); pointer-events:auto;}
+  .brand__mark{
+    font-family:var(--font-display); font-size:1.5rem; line-height:1;
+    letter-spacing:-.02em; color:var(--lf-paper); text-decoration:none;
+    display:inline-flex; align-items:baseline; gap:.1em;
+  }
+  .brand__mark i{color:var(--lf-sand-light); font-style:italic;}
+  .brand__rule{width:1px; height:30px; background:rgba(250,248,245,.26);}
+  .brand__addr{display:flex; flex-direction:column; gap:.15em;}
+  .brand__addr strong{
+    font-family:var(--font-display); font-weight:400; font-size:1.0625rem;
+    letter-spacing:-.01em; line-height:1.15;
+  }
+  .brand__addr span{
+    font-size:.6875rem; letter-spacing:.13em; text-transform:uppercase;
+    color:rgba(250,248,245,.62);
+  }
+
+  .facts{
+    display:flex; gap:1.375rem; pointer-events:auto;
+    padding-top:.2rem;
+  }
+  .fact{display:flex; flex-direction:column; gap:.2em; text-align:right;}
+  .fact b{font-family:var(--font-display); font-weight:400; font-size:1.0625rem; line-height:1;}
+  .fact span{
+    font-size:.625rem; letter-spacing:.14em; text-transform:uppercase;
+    color:rgba(250,248,245,.55);
+  }
+  @media (max-width:900px){ .facts{display:none;} }
+
+  /* --------------------------------------------------------- room caption */
+  .caption{
+    position:fixed; left:var(--space-4); bottom:calc(var(--rail-h) + var(--space-4));
+    z-index:20; pointer-events:none;
+    display:flex; flex-direction:column; gap:.25rem;
+  }
+  .caption__idx{
+    font-size:.625rem; letter-spacing:.2em; text-transform:uppercase;
+    color:var(--lf-sand-light);
+  }
+  .caption__name{
+    font-family:var(--font-display); font-size:2rem; line-height:1.05;
+    letter-spacing:-.03em; margin:0;
+    text-shadow:0 2px 18px rgba(8,5,3,.75), 0 1px 3px rgba(8,5,3,.6);
+  }
+  @media (max-width:640px){ .caption__name{font-size:1.375rem;} }
+
+  /* -------------------------------------------------------------- rail */
+  .rail{
+    position:fixed; left:0; right:0; bottom:0; height:var(--rail-h); z-index:30;
+    display:flex; align-items:center; gap:var(--space-2);
+    padding:0 var(--space-3);
+    background:linear-gradient(to top,rgba(10,7,5,.97) 30%,rgba(10,7,5,.80) 100%);
+    border-top:1px solid rgba(212,184,150,.20);
+    overflow-x:auto; overflow-y:hidden;
+    scrollbar-width:thin; scrollbar-color:rgba(212,184,150,.45) transparent;
+  }
+  .rail::-webkit-scrollbar{height:5px;}
+  .rail::-webkit-scrollbar-thumb{background:rgba(212,184,150,.45); border-radius:99px;}
+
+  .chip{
+    position:relative; flex:0 0 auto; width:124px; padding:0; border:0; cursor:pointer;
+    background:none; border-radius:3px; overflow:hidden;
+    outline-offset:3px;
+    transition:transform .32s var(--ease-spring), box-shadow .32s var(--ease-out);
+  }
+  .chip img{
+    display:block; width:100%; height:62px; object-fit:cover; border-radius:3px;
+    filter:saturate(.82) brightness(.72);
+    transition:filter .32s var(--ease-out);
+  }
+  /* Gradient scrim + sand multiply layer, per the image treatment rule. */
+  .chip::after{
+    content:""; position:absolute; inset:0; border-radius:3px; pointer-events:none;
+    background:linear-gradient(to top,rgba(0,0,0,.62) 0%,transparent 62%),
+               linear-gradient(140deg,rgba(176,137,104,.30),transparent 65%);
+    mix-blend-mode:multiply;
+  }
+  .chip__label{
+    position:absolute; left:6px; right:6px; bottom:5px; z-index:1;
+    font-size:.625rem; letter-spacing:.06em; text-align:left;
+    color:rgba(250,248,245,.94); text-shadow:0 1px 4px rgba(0,0,0,.9);
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .chip__num{
+    position:absolute; top:5px; left:6px; z-index:1;
+    font-family:var(--font-display); font-size:.6875rem; line-height:1;
+    color:var(--lf-sand-light); text-shadow:0 1px 4px rgba(0,0,0,.9);
+  }
+  .chip:hover{transform:translateY(-3px); box-shadow:var(--lift-2);}
+  .chip:hover img{filter:saturate(1) brightness(.94);}
+  .chip:focus-visible{outline:2px solid var(--lf-sand-light);}
+  .chip:active{transform:translateY(-1px) scale(.985);}
+  .chip[aria-current="true"] img{filter:saturate(1.02) brightness(1);}
+  .chip[aria-current="true"]{box-shadow:var(--lift-2), inset 0 0 0 2px var(--lf-sand);}
+  .chip[aria-current="true"] .chip__num{color:var(--lf-paper);}
+
+  /* ------------------------------------------------------------ controls */
+  .tools{
+    position:fixed; right:var(--space-4); bottom:calc(var(--rail-h) + var(--space-4));
+    z-index:30; display:flex; gap:var(--space-1);
+  }
+  .tool{
+    width:38px; height:38px; display:grid; place-items:center; cursor:pointer;
+    border:1px solid rgba(212,184,150,.30); border-radius:2px;
+    background:rgba(18,13,9,.68); backdrop-filter:blur(10px);
+    box-shadow:var(--lift-1); outline-offset:2px;
+    transition:transform .3s var(--ease-spring), background-color .3s var(--ease-out),
+               border-color .3s var(--ease-out);
+  }
+  .tool svg{width:17px; height:17px; stroke:var(--lf-paper); fill:none;
+            stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round;}
+  .tool:hover{background:rgba(176,137,104,.90); border-color:var(--lf-sand-light); transform:translateY(-2px);}
+  .tool:focus-visible{outline:2px solid var(--lf-sand-light);}
+  .tool:active{transform:translateY(0) scale(.94);}
+  .tool[aria-pressed="true"]{background:var(--lf-sand); border-color:var(--lf-sand-light);}
+
+  /* --------------------------------------------------------- link marker */
+  .hot{
+    width:52px; height:52px; display:grid; place-items:center; cursor:pointer;
+    border-radius:50%;
+    background:radial-gradient(circle at 50% 38%, rgba(250,248,245,.30), rgba(176,137,104,.30) 62%, transparent 72%);
+    box-shadow:0 0 0 1.5px rgba(250,248,245,.80) inset, 0 3px 14px rgba(0,0,0,.5);
+    transition:transform .34s var(--ease-spring), box-shadow .34s var(--ease-out);
+  }
+  .hot::before{
+    content:""; position:absolute; inset:-9px; border-radius:50%;
+    border:1.5px solid rgba(250,248,245,.42);
+    animation:pulse 3s var(--ease-out) infinite;
+  }
+  .hot span{
+    width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;
+    border-bottom:11px solid rgba(250,248,245,.96); transform:translateY(-1px);
+    filter:drop-shadow(0 1px 3px rgba(0,0,0,.65));
+  }
+  .hot--est{box-shadow:0 0 0 1.5px var(--lf-sand-light) inset, 0 3px 14px rgba(0,0,0,.5);}
+  @keyframes pulse{
+    0%{transform:scale(.86); opacity:.9}
+    70%{transform:scale(1.28); opacity:0}
+    100%{transform:scale(1.28); opacity:0}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .hot::before{animation:none;}
+    *{transition-duration:.01ms !important;}
+  }
+
+  /* ------------------------------------------------------------- author */
+  .author{
+    position:fixed; top:84px; right:var(--space-4); z-index:40; width:288px;
+    background:rgba(18,13,9,.94); backdrop-filter:blur(14px);
+    border:1px solid rgba(212,184,150,.30); border-radius:3px;
+    box-shadow:var(--lift-3); padding:var(--space-3);
+    display:none; flex-direction:column; gap:var(--space-2);
+  }
+  .author[data-open="true"]{display:flex;}
+  .author h2{
+    margin:0; font-family:var(--font-display); font-weight:400; font-size:1.0625rem;
+    letter-spacing:-.01em;
+  }
+  .author p{margin:0; font-size:.75rem; line-height:1.6; color:rgba(250,248,245,.68);}
+  .author code{
+    background:rgba(212,184,150,.16); padding:.1em .35em; border-radius:2px;
+    font-size:.9em; color:var(--lf-sand-light);
+  }
+  .author select,.author button.act{
+    width:100%; padding:.5rem .625rem; border-radius:2px;
+    border:1px solid rgba(212,184,150,.34); background:rgba(10,7,5,.75);
+    color:var(--lf-paper); font-size:.8125rem; cursor:pointer; outline-offset:2px;
+    transition:border-color .25s var(--ease-out), background-color .25s var(--ease-out);
+  }
+  .author select:hover,.author button.act:hover{border-color:var(--lf-sand-light); background:rgba(176,137,104,.28);}
+  .author select:focus-visible,.author button.act:focus-visible{outline:2px solid var(--lf-sand-light);}
+  .author button.act:active{transform:scale(.99);}
+  .author .row{display:flex; gap:var(--space-1);}
+  .author .stat{
+    display:flex; justify-content:space-between; font-size:.6875rem;
+    letter-spacing:.06em; text-transform:uppercase; color:rgba(250,248,245,.55);
+    padding-top:.25rem; border-top:1px solid rgba(212,184,150,.18);
+  }
+  .author .stat b{color:var(--lf-sand-light); font-weight:500;}
+
+  .toast{
+    position:fixed; left:50%; bottom:calc(var(--rail-h) + 84px); transform:translateX(-50%) translateY(8px);
+    z-index:60; padding:.5rem .875rem; border-radius:2px;
+    background:rgba(18,13,9,.94); border:1px solid rgba(212,184,150,.34);
+    box-shadow:var(--lift-2); font-size:.8125rem; opacity:0; pointer-events:none;
+    transition:opacity .3s var(--ease-out), transform .3s var(--ease-spring);
+  }
+  .toast[data-show="true"]{opacity:1; transform:translateX(-50%) translateY(0);}
+
+  .boot{
+    position:fixed; inset:0; z-index:80; display:grid; place-items:center;
+    background:var(--lf-ink); transition:opacity .6s var(--ease-out);
+  }
+  .boot[hidden]{opacity:0; pointer-events:none;}
+  .boot__inner{text-align:center;}
+  .boot__mark{font-family:var(--font-display); font-size:2.5rem; letter-spacing:-.02em;}
+  .boot__mark i{color:var(--lf-sand-light); font-style:italic;}
+  .boot__bar{
+    margin:1.25rem auto 0; width:150px; height:1px; background:rgba(250,248,245,.18);
+    position:relative; overflow:hidden;
+  }
+  .boot__bar::after{
+    content:""; position:absolute; inset:0; background:var(--lf-sand-light);
+    transform:translateX(-100%); animation:sweep 1.5s var(--ease-out) infinite;
+  }
+  @keyframes sweep{to{transform:translateX(100%)}}
+  .boot__err{margin-top:1rem; font-size:.8125rem; color:#e0a89a; max-width:36ch;}
+</style>
+</head>
+<body>
+
+<div class="boot" id="boot">
+  <div class="boot__inner">
+    <div class="boot__mark">LF<i>.</i></div>
+    <div class="boot__bar"></div>
+    <div class="boot__err" id="bootErr" hidden></div>
+  </div>
+</div>
+
+<header class="topbar">
+  <div class="brand">
+    <a class="brand__mark" href="/">LF<i>.</i></a>
+    <div class="brand__rule"></div>
+    <div class="brand__addr">
+      <strong id="addr">—</strong>
+      <span id="city">—</span>
+    </div>
+  </div>
+  <div class="facts" id="facts"></div>
+</header>
+
+<div id="stage"></div>
+
+<div class="caption">
+  <div class="caption__idx" id="capIdx">—</div>
+  <h1 class="caption__name" id="capName">—</h1>
+</div>
+
+<div class="tools">
+  <button class="tool" id="btnAuthor" aria-pressed="false" title="Hotspot editor" aria-label="Toggle hotspot editor">
+    <svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+  </button>
+  <button class="tool" id="btnFull" title="Fullscreen" aria-label="Toggle fullscreen">
+    <svg viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+  </button>
+</div>
+
+<section class="author" id="author" aria-label="Hotspot editor">
+  <h2>Hotspot editor</h2>
+  <p>Pick a destination, then <strong>click the doorway</strong> in the panorama.
+     Clicking again moves that link. A <em>sand</em> ring means the position is
+     still an estimate; a <em>white</em> ring means you placed it.</p>
+  <select id="destSel" aria-label="Destination room"></select>
+  <div class="row">
+    <button class="act" id="btnUndo">Undo</button>
+    <button class="act" id="btnDel">Remove link</button>
+  </div>
+  <button class="act" id="btnExport">Download tour.json</button>
+  <div class="stat"><span>Confirmed</span><b id="statConf">0 / 0</b></div>
+</section>
+
+<nav class="rail" id="rail" aria-label="Rooms"></nav>
+<div class="toast" id="toast"></div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.185.1/build/three.module.js",
+    "@photo-sphere-viewer/core": "https://cdn.jsdelivr.net/npm/@photo-sphere-viewer/core@5.15.1/index.module.js",
+    "@photo-sphere-viewer/markers-plugin": "https://cdn.jsdelivr.net/npm/@photo-sphere-viewer/markers-plugin@5.15.1/index.module.js",
+    "@photo-sphere-viewer/virtual-tour-plugin": "https://cdn.jsdelivr.net/npm/@photo-sphere-viewer/virtual-tour-plugin@5.15.1/index.module.js"
+  }
+}
+</script>
+
+<script type="module">
+import { Viewer } from '@photo-sphere-viewer/core';
+import { MarkersPlugin } from '@photo-sphere-viewer/markers-plugin';
+import { VirtualTourPlugin } from '@photo-sphere-viewer/virtual-tour-plugin';
+
+const boot = document.getElementById('boot');
+const bootErr = document.getElementById('bootErr');
+const fail = (msg) => { bootErr.hidden = false; bootErr.textContent = msg; };
+
+let tour;
+try {
+  const res = await fetch('tour.json', { cache: 'no-cache' });
+  if (!res.ok) throw new Error(`tour.json -> HTTP ${res.status}`);
+  tour = await res.json();
+} catch (e) {
+  fail(`Could not load the tour data. ${e.message}`);
+  throw e;
+}
+
+const scenes = tour.scenes;
+const byId = new Map(scenes.map(s => [s.id, s]));
+const deg = Math.PI / 180;
+
+/* ---------------------------------------------------------------- chrome */
+document.getElementById('addr').textContent = tour.property.address;
+document.getElementById('city').textContent = `${tour.property.city}, ${tour.property.state}`;
+document.getElementById('facts').innerHTML = [
+  [tour.property.beds, 'Beds'], [tour.property.baths, 'Baths'],
+  [tour.property.sqft.toLocaleString(), 'Sq Ft'], [tour.property.year_built, 'Built'],
+].map(([v, l]) => `<div class="fact"><b>${v}</b><span>${l}</span></div>`).join('');
+
+const rail = document.getElementById('rail');
+rail.innerHTML = scenes.map((s, i) => `
+  <button class="chip" data-id="${s.id}" aria-current="false" title="${s.name}">
+    <img src="${s.thumb}" alt="" loading="lazy" width="400" height="200" />
+    <span class="chip__num">${String(i + 1).padStart(2, '0')}</span>
+    <span class="chip__label">${s.name}</span>
+  </button>`).join('');
+
+/* ---------------------------------------------------------------- viewer */
+const nodes = scenes.map(s => ({
+  id: s.id,
+  panorama: s.pano,
+  thumbnail: s.thumb,
+  name: s.name,
+  links: s.links.map(l => ({
+    nodeId: l.to,
+    position: { yaw: l.yaw * deg, pitch: l.pitch * deg },
+    estimated: l.estimated !== false,
+  })),
+}));
+
+const viewer = new Viewer({
+  container: document.getElementById('stage'),
+  defaultYaw: 0,
+  navbar: false,
+  loadingImg: null,
+  touchmoveTwoFingers: false,
+  mousewheelCtrlKey: false,
+  plugins: [
+    MarkersPlugin,
+    [VirtualTourPlugin, {
+      positionMode: 'manual',
+      renderMode: '2d',
+      nodes,
+      startNodeId: tour.defaultScene,
+      // The factory receives the link, so an unverified position can carry its
+      // own sand ring rather than being chased through the DOM afterwards.
+      arrowStyle: {
+        element: (link) => {
+          const b = document.createElement('div');
+          b.className = link.estimated ? 'hot hot--est' : 'hot';
+          b.innerHTML = '<span></span>';
+          return b;
+        },
+        size: { width: 52, height: 52 },
+      },
+    }],
+  ],
+});
+
+const vt = viewer.getPlugin(VirtualTourPlugin);
+const markers = viewer.getPlugin(MarkersPlugin);
+
+viewer.addEventListener('ready', () => { boot.hidden = true; }, { once: true });
+viewer.addEventListener('panorama-error', (e) => fail(`Panorama failed to load: ${e.error?.message ?? e}`));
+
+let currentId = tour.defaultScene;
+vt.addEventListener('node-changed', ({ node }) => {
+  currentId = node.id;
+  const i = scenes.findIndex(s => s.id === node.id);
+  document.getElementById('capIdx').textContent =
+    `${String(i + 1).padStart(2, '0')} — ${scenes.length} rooms`;
+  document.getElementById('capName').textContent = node.name;
+  document.title = `${node.name} — ${tour.property.address} · LF Property Media`;
+  for (const c of rail.children) {
+    const on = c.dataset.id === node.id;
+    c.setAttribute('aria-current', String(on));
+    if (on) c.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+  }
+});
+
+rail.addEventListener('click', (e) => {
+  const chip = e.target.closest('.chip');
+  if (chip) vt.setCurrentNode(chip.dataset.id);
+});
+
+/* ---------------------------------------------------------------- author */
+const authorPanel = document.getElementById('author');
+const destSel = document.getElementById('destSel');
+const toast = document.getElementById('toast');
+let authoring = false;
+const undo = [];
+
+const say = (m) => {
+  toast.textContent = m;
+  toast.dataset.show = 'true';
+  clearTimeout(say._t);
+  say._t = setTimeout(() => (toast.dataset.show = 'false'), 2200);
+};
+
+function refreshDest() {
+  destSel.innerHTML = scenes.filter(s => s.id !== currentId)
+    .map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+}
+function stats() {
+  const all = scenes.flatMap(s => s.links);
+  document.getElementById('statConf').textContent =
+    `${all.filter(l => l.estimated === false).length} / ${all.length}`;
+}
+function rebuild(id) {
+  const s = byId.get(id);
+  vt.setNodes(scenes.map(x => ({
+    id: x.id, panorama: x.pano, thumbnail: x.thumb, name: x.name,
+    links: x.links.map(l => ({
+      nodeId: l.to,
+      position: { yaw: l.yaw * deg, pitch: l.pitch * deg },
+      estimated: l.estimated !== false,
+    })),
+  })), id);
+  stats();
+}
+
+document.getElementById('btnAuthor').addEventListener('click', (e) => {
+  authoring = !authoring;
+  authorPanel.dataset.open = String(authoring);
+  e.currentTarget.setAttribute('aria-pressed', String(authoring));
+  if (authoring) { refreshDest(); stats(); say('Click a doorway to place a link'); }
+});
+
+viewer.addEventListener('click', ({ data }) => {
+  if (!authoring || data.rightclick) return;
+  const to = destSel.value;
+  if (!to) return;
+  const scene = byId.get(currentId);
+  const yaw = ((data.yaw / deg + 540) % 360) - 180;
+  const pitch = data.pitch / deg;
+
+  undo.push(JSON.parse(JSON.stringify({ id: currentId, links: scene.links })));
+  const existing = scene.links.find(l => l.to === to);
+  if (existing) { existing.yaw = yaw; existing.pitch = pitch; existing.estimated = false; }
+  else scene.links.push({ to, yaw, pitch, estimated: false });
+
+  // Keep the graph reciprocal; the return link stays estimated until placed.
+  const back = byId.get(to);
+  if (!back.links.some(l => l.to === currentId)) {
+    back.links.push({ to: currentId, yaw: 0, pitch: -8, estimated: true });
+  }
+  rebuild(currentId);
+  say(`${byId.get(to).name} → yaw ${yaw.toFixed(1)}°, pitch ${pitch.toFixed(1)}°`);
+});
+
+document.getElementById('btnUndo').addEventListener('click', () => {
+  const prev = undo.pop();
+  if (!prev) return say('Nothing to undo');
+  byId.get(prev.id).links = prev.links;
+  rebuild(currentId);
+  say('Reverted');
+});
+
+document.getElementById('btnDel').addEventListener('click', () => {
+  const to = destSel.value;
+  const scene = byId.get(currentId);
+  undo.push(JSON.parse(JSON.stringify({ id: currentId, links: scene.links })));
+  scene.links = scene.links.filter(l => l.to !== to);
+  rebuild(currentId);
+  say(`Removed link to ${byId.get(to).name}`);
+});
+
+document.getElementById('btnExport').addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify(tour, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'tour.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  say('tour.json downloaded');
+});
+
+vt.addEventListener('node-changed', refreshDest);
+
+/* ---------------------------------------------------------------- keys */
+document.getElementById('btnFull').addEventListener('click', () => viewer.toggleFullscreen());
+addEventListener('keydown', (e) => {
+  if (e.target.matches('select,input')) return;
+  const i = scenes.findIndex(s => s.id === currentId);
+  if (e.key === 'ArrowRight') vt.setCurrentNode(scenes[(i + 1) % scenes.length].id);
+  if (e.key === 'ArrowLeft') vt.setCurrentNode(scenes[(i - 1 + scenes.length) % scenes.length].id);
+  if (e.key === 'f') viewer.toggleFullscreen();
+});
+</script>
+</body>
+</html>

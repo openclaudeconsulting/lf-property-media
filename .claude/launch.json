@@ -2,10 +2,10 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "lf-static",
-      "runtimeExecutable": "python",
-      "runtimeArgs": ["-m", "http.server", "8099"],
-      "port": 8099
+      "name": "lf-site",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["serve.mjs"],
+      "port": 3000
     }
   ]
 }

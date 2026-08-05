@@ -7,8 +7,9 @@ one finished, room-named 360 photo ready to upload to CloudPano.
 5 bracketed frames  ->  fuse  ->  grade  ->  tag as 360  ->  01-living-room.jpg
 ```
 
-No install step: it runs on Python 3 with `opencv-python`, `numpy` and
-`Pillow`, all of which are already on this machine.
+It runs on Python 3 with `opencv-python`, `numpy` and `Pillow`, all of which are
+already on this machine. Reading Studio's **DNG** exports additionally needs
+`rawpy` (`pip install rawpy`); every other input format works without it.
 
 ---
 
@@ -19,11 +20,42 @@ unrolled sphere. Export them out of Insta360 Studio first:
 
 1. Load the shoot into Insta360 Studio.
 2. Select all the bracketed frames.
-3. Export as JPEG (or 16-bit TIFF for a little more latitude), **equirectangular**.
+3. **Export → Export 360 photo** (*not* "Export reframed photo", which writes a
+   flat 16:9 crop), **Original Resolution**, horizon levelling on, bottom logo
+   off. Leave every colour and HDR control alone — export the brackets as
+   separate flat frames and let this tool do the fusing and grading.
 4. Point this tool at that export folder.
 
 Studio's stitching uses Insta360's own lens calibration. Nothing open-source
 matches it, so it is worth doing that pass rather than trying to skip it.
+
+**Studio picks the output format from the source, and the choice is locked.**
+`.insp` sources export as JPEG; `.dng` sources export as DNG and the Output
+Format dropdown is greyed out. Both are fine here:
+
+| Source on the card | Studio writes | Notes |
+|---|---|---|
+| `.insp` | JPEG | 8-bit, Insta360's colour already baked in |
+| `.dng`  | DNG  | 16-bit *linear* — more latitude, needs `rawpy` |
+
+A Studio-exported DNG is a stitched, demosaiced, uncompressed 16-bit RGB frame
+that happens to sit in a DNG container. It carries no white balance, no gamma
+and camera-space colour, so it is decoded through libraw (`rawpy`) with the shot
+white balance and the camera→sRGB matrix applied. Auto-brightening is disabled
+deliberately: letting libraw normalise each frame on its own would flatten the
+exposure differences the whole fuse depends on.
+
+Two DNG-specific traps, both handled:
+
+- **Raw dual-fisheye `.dng` straight off the camera is refused**, with a message
+  telling you to run it through Studio. It is a 1:2 portrait Bayer mosaic, not a
+  panorama, and decoding one would produce something that wraps to garbage on a
+  sphere.
+- **Studio stamps its own export time into the exported DNG** and drops
+  `DateTimeOriginal`, so the file's timestamp says when it was converted, not
+  when it was shot. Grouping falls back to the capture time in the *filename*
+  (`IMG_<date>_<time>_…`), which Insta360 stamps once per tripod position and
+  therefore shares across all the frames of one bracket.
 
 If you hand it raw `.insp` dual-fisheye files instead, it notices, fuses the
 brackets anyway, and writes `merged_NN.insp` files for you to stitch in Studio

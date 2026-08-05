@@ -62,3 +62,8 @@ drive-download-*.zip
 Screenshot *.png
 hcrgI.jpg
 6869*.jpg
+
+# tours/ is PUBLISHED site content, so unlike the job folders it has to be
+# committed -- Cloudflare Pages deploys what is in the repo. These are the
+# web-sized renders (4096x2048, ~1MB each), not the masters; the full-resolution
+# originals stay in Filing System/ and remain ignored.

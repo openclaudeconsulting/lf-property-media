@@ -315,6 +315,38 @@ def main() -> int:
         if merged.exists():
             check("fisheye output carries NO 360 tags", xmp_of(merged) is None)
 
+        # A dim room shot with an unpatched nadir has a black floor strip and a
+        # ceiling nearly as dark, which looks exactly like a fisheye frame's
+        # dark corners. What separates them is the horizon: this one is lit all
+        # the way across, including at the seam.
+        dark = np.full((600, 1200, 3), 0.03, np.float32)
+        dark[150:480] = 0.28
+        check("a dark room with a black nadir is NOT called dual-fisheye",
+              not P.looks_like_dual_fisheye(dark))
+
+        print("\n--- Studio DNG exports ---")
+        check(".dng is an accepted input extension", ".dng" in P.READABLE_EXT)
+        # Every frame of one tripod position shares the filename time field.
+        # This is what holds the brackets together: Studio overwrites the DNG's
+        # own timestamp with the *export* time, so grouping on file metadata
+        # would interleave positions that were shot minutes apart.
+        setA = [Path(f"IMG_20260608_100615_00_{n:03d}.dng") for n in range(20, 29)]
+        setB = [Path(f"IMG_20260608_100734_00_{n:03d}.dng") for n in range(29, 38)]
+        stampsA = {P.capture_time_from_name(p) for p in setA}
+        stampsB = {P.capture_time_from_name(p) for p in setB}
+        check("one bracket set shares a single filename timestamp",
+              len(stampsA) == 1 and None not in stampsA)
+        check("the next tripod position gets a different timestamp",
+              len(stampsB) == 1 and stampsA != stampsB)
+        check("the gap between positions exceeds the default --gap",
+              (stampsB.pop() - stampsA.pop()).total_seconds() > 6.0)
+        check("a non-Insta360 filename yields no timestamp",
+              P.capture_time_from_name(Path("shot_1.jpg")) is None
+              and P.capture_time_from_name(Path("IMG_20260805_000_02.jpg")) is None)
+        check("a .dng never reports its own (export-time) metadata as capture time",
+              P.read_capture_meta(Path("no_such_file.dng")) == (None, None)
+              and P.read_capture_meta(setA[0])[0] == datetime(2026, 6, 8, 10, 6, 15))
+
         print("\n--- trailer splitting (the .insp metadata block) ---")
         plain = (out / "01-living-room.jpg").read_bytes()
         img_part, trailer = P.split_jpeg_trailer(plain)

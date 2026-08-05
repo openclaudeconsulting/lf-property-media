@@ -21,8 +21,11 @@ Three subcommands:
         file's title metadata. labels.json is {"pano_01.jpg": "living-room"}.
 
 Input should be *stitched equirectangular* frames (2:1) -- export the brackets
-out of Insta360 Studio as JPEG or TIFF first. Raw dual-fisheye .insp files are
-detected and handled in --fisheye mode, but see README for the caveat.
+out of Insta360 Studio first. Studio exports JPEG/TIFF from .insp sources and
+16-bit linear DNG from .dng sources; all of those are read here. Raw dual-fisheye
+.insp files are detected and handled in --fisheye mode, but see README for the
+caveat, and raw dual-fisheye .dng straight off the camera is refused outright --
+it has to go through Studio to be stitched.
 """
 from __future__ import annotations
 
@@ -41,7 +44,7 @@ from PIL import Image
 Image.MAX_IMAGE_PIXELS = None  # 72 MP panoramas are normal here, not a decompression bomb
 
 EPS = 1e-6
-READABLE_EXT = {".jpg", ".jpeg", ".tif", ".tiff", ".png", ".insp"}
+READABLE_EXT = {".jpg", ".jpeg", ".tif", ".tiff", ".png", ".insp", ".dng"}
 
 # ---------------------------------------------------------------- grade presets
 
@@ -120,12 +123,46 @@ def wrap_blur(img: np.ndarray, sigma: float, wrap: bool) -> np.ndarray:
 
 # ---------------------------------------------------------------- file reading
 
+def read_dng(path: Path) -> np.ndarray:
+    """Read an Insta360-Studio-exported equirectangular DNG to float32 RGB 0..1.
+
+    Studio writes 16-bit *linear* DNG when the source frames were raw: already
+    stitched and demosaiced, but with no white balance, no gamma and still in
+    camera colour space. libraw (via rawpy) applies the shot white balance and
+    the camera->sRGB matrix, which hand-rolling gets subtly wrong.
+
+    no_auto_bright is essential: rawpy would otherwise stretch each bracket
+    frame to full range independently, destroying the exposure differences that
+    the whole fuse depends on.
+    """
+    try:
+        import rawpy
+    except ImportError:
+        raise ValueError("reading .dng needs rawpy -- pip install rawpy") from None
+    with rawpy.imread(str(path)) as raw:
+        # A camera-original dual-fisheye frame still carries its Bayer mosaic.
+        # Those are not panoramas and must go through Studio first; decoding one
+        # here would silently produce a 1:2 portrait "panorama" that wraps to
+        # garbage on a sphere.
+        if raw.raw_pattern is not None:
+            raise ValueError(
+                "this is a raw dual-fisheye DNG straight off the camera, not a "
+                "stitched panorama -- export it from Insta360 Studio first "
+                "(Export > Export 360 photo, Original Resolution)")
+        rgb = raw.postprocess(output_bps=16, use_camera_wb=True,
+                              no_auto_bright=True, gamma=(2.222, 4.5),
+                              output_color=rawpy.ColorSpace.sRGB)
+    return np.ascontiguousarray(rgb.astype(np.float32) / np.float32(65535.0))
+
+
 def read_image(path: Path) -> np.ndarray:
-    """Read any of jpg/tif/png/insp to float32 RGB in 0..1.
+    """Read any of jpg/tif/png/insp/dng to float32 RGB in 0..1.
 
     Goes through imdecode rather than imread so that non-ASCII paths work on
     Windows, and so that .insp files decode as the JPEG they actually are.
     """
+    if path.suffix.lower() == ".dng":
+        return read_dng(path)
     raw = np.fromfile(str(path), dtype=np.uint8)
     if raw.size == 0:
         raise ValueError("file is empty")
@@ -142,8 +179,30 @@ def read_image(path: Path) -> np.ndarray:
     return np.ascontiguousarray(img)
 
 
+# Insta360 names every frame IMG_<date>_<time>_<seq>_<n>. The time field is
+# stamped once per tripod position, so all the frames of one bracket share it --
+# which makes it a better grouping key than any timestamp, not just a fallback.
+_INSTA_NAME = re.compile(r"IMG_(\d{8})_(\d{6})_")
+
+
+def capture_time_from_name(path: Path) -> datetime | None:
+    m = _INSTA_NAME.match(path.name)
+    if not m:
+        return None
+    try:
+        return datetime.strptime(m.group(1) + m.group(2), "%Y%m%d%H%M%S")
+    except ValueError:
+        return None
+
+
 def read_capture_meta(path: Path) -> tuple[datetime | None, float | None]:
     """(capture time, exposure-bias in stops) from EXIF, either may be None."""
+    if path.suffix.lower() == ".dng":
+        # Studio stamps its *export* time into the exported DNG and drops
+        # DateTimeOriginal entirely, so the file's own timestamp says when it
+        # was converted, not when it was shot. Grouping on that would scatter
+        # the brackets. The filename still carries the real capture time.
+        return capture_time_from_name(path), None
     try:
         with Image.open(path) as im:
             exif = im.getexif()
@@ -256,7 +315,25 @@ def looks_like_dual_fisheye(img: np.ndarray) -> bool:
     ]
     corner_level = float(np.mean([c.mean() for c in corners]))
     centre = float(img[h // 3:2 * h // 3].mean())
-    return corner_level < 0.10 and corner_level < centre * 0.25
+    if not (corner_level < 0.10 and corner_level < centre * 0.25):
+        return False
+
+    # Dark corners alone are not enough: a dim room shot with an unpatched
+    # nadir has a black floor strip and can have a ceiling almost as dark, which
+    # is exactly what the test above is looking for. The horizon tells the two
+    # apart. A dual-fisheye frame is two circles, so its mid-height row falls to
+    # black where each circle ends -- at x = 0, w/2 and w -- while staying lit
+    # at the circle centres. An equirectangular frame carries real image data
+    # straight across that row and wraps continuously at the seam.
+    half = max(h // 200, 1)
+    band = img[h // 2 - half:h // 2 + half]
+    edge = max(w // 200, 1)
+    seam = float(np.mean([band[:, :edge].mean(),
+                          band[:, w // 2 - edge:w // 2 + edge].mean(),
+                          band[:, -edge:].mean()]))
+    lobe = float(np.mean([band[:, w // 4 - edge:w // 4 + edge].mean(),
+                          band[:, 3 * w // 4 - edge:3 * w // 4 + edge].mean()]))
+    return seam < lobe * 0.35
 
 
 # ---------------------------------------------------------------- exposure fusion
@@ -664,7 +741,12 @@ def cmd_build(args) -> int:
             if len(shapes) > 1:
                 raise ValueError(f"frames differ in size: {sorted(shapes)}")
 
-            fisheye = args.fisheye or looks_like_dual_fisheye(stack[0])
+            # read_dng refuses anything still carrying a Bayer mosaic, so a .dng
+            # that got this far is a Studio export: already stitched, already
+            # demosaiced. Guessing from pixels would only invent false positives.
+            stitched = grp.files[0].suffix.lower() == ".dng"
+            fisheye = args.fisheye or (not stitched
+                                       and looks_like_dual_fisheye(stack[0]))
             wrap = not fisheye
             if fisheye and not args.fisheye:
                 print("    detected dual-fisheye input -- see README, these need "

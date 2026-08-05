@@ -1,0 +1,479 @@
+{
+  "schema": "claude-pano/1",
+  "property": {
+    "address": "2719 Fort Worth Street",
+    "city": "Sarasota",
+    "state": "FL",
+    "beds": 4,
+    "baths": "2.5",
+    "sqft": 2140,
+    "price": "$725,000",
+    "year_built": 1958,
+    "mls": "A4696731"
+  },
+  "defaultScene": "22-front-entry",
+  "scenes": [
+    {
+      "id": "01-study",
+      "name": "Study",
+      "pano": "panos/01-study.jpg",
+      "thumb": "thumbs/01-study.jpg",
+      "initialYaw": 0,
+      "links": [
+        {
+          "to": "02-guest-suite-bedroom",
+          "yaw": 160,
+          "pitch": -10,
+          "estimated": false
+        }
+      ]
+    },
+    {
+      "id": "02-guest-suite-bedroom",
+      "name": "Guest Suite Bedroom",
+      "pano": "panos/02-guest-suite-bedroom.jpg",
+      "thumb": "thumbs/02-guest-suite-bedroom.jpg",
+      "initialYaw": 0,
+      "links": [
+        {
+          "to": "01-study",
+          "yaw": -138,
+          "pitch": -10,
+          "estimated": false
+        },
+        {
+          "to": "03-guest-suite-kitchenette",
+          "yaw": 85,
+          "pitch": -10,
+          "estimated": false
+        },
+        {
+          "to": "04-bedroom",
+          "yaw": 160,
+          "pitch": -10,
+          "estimated": true
+        }
+      ]
+    },
+    {
+      "id": "03-guest-suite-kitchenette",
+      "name": "Guest Suite Kitchenette",
+      "pano": "panos/03-guest-suite-kitchenette.jpg",
+      "thumb": "thumbs/03-guest-suite-kitchenette.jpg",
+      "initialYaw": 0,
+      "links": [
+        {
+          "to": "02-guest-suite-bedroom",
+          "yaw": -135,
+          "pitch": -10,
+          "estimated": false
+        },
+        {
+          "to": "07-music-loft",
+          "yaw": -25,
+          "pitch": -10,
+          "estimated": false
+        }
+      ]
+    },
+    {
+      "id": "04-bedroom",
+      "name": "Bedroom",
+      "pano": "panos/04-bedroom.jpg",
+      "thumb": "thumbs/04-bedroom.jpg",
+      "initialYaw": 0,
+      "links": [
+        {
+          "to": "02-guest-suite-bedroom",
+          "yaw": -58,
+          "pitch": -10,
+          "estimated": false
+        }
+      ]
+    },
+    {
+      "id": "05-screened-balcony",
+      "name": "Screened Balcony",
+      "pano": "panos/05-screened-balcony.jpg",
+      "thumb": "thumbs/05-screened-balcony.jpg",
+      "initialYaw": 0,
+      "links": [
+        {
+          "to": "07-music-loft",
+          "yaw": 58,
+          "pitch": -10,
+          "estimated": true
+        }
+      ]
+    },
+    {
+      "id": "06-hall-bathroom",
+      "name": "Hall Bathroom",
+      "pano": "panos/06-hall-bathroom.jpg",
+      "thumb": "thumbs/06-hall-bathroom.jpg",
+      "initialYaw": 0,
+      "links": [
+        {
+          "to": "15-kitchen",
+          "yaw": -8,
+          "pitch": -10,
+          "estimated": false
+        }
+      ]
+    },
+    {
+      "id": "07-music-loft",
+      "name": "Music Loft",
+      "pano": "panos/07-music-loft.jpg",
+      "thumb": "thumbs/07-music-loft.jpg",
+      "initialYaw": 0,
+      "links": [
+        {
+          "to": "16-great-room",
+          "yaw": 60,
+          "pitch": -16,
+          "estimated": false
+        },
+        {
+          "to": "03-guest-suite-kitchenette",
+          "yaw": 8,
+          "pitch": -10,
+          "estimated": false
+        },
+        {
+          "to": "05-screened-balcony",
+          "yaw": -60,
+          "pitch": -10,
+          "estimated": true
+        }
+      ]
+    },
+    {
+      "id": "08-bedroom-2",
+      "name": "Bedroom II",
+      "pano": "panos/08-bedroom-2.jpg",
+      "thumb": "thumbs/08-bedroom-2.jpg",
+      "initialYaw": 0,
+      "links": [
+        {
+          "to": "13-living-room",
+          "yaw": -92,
+          "pitch": -10,
+          "estimated": false
+        }
+      ]
+    },
+    {
+      "id": "09-guitar-room",
+      "name": "Guitar Room",
+      "pano": "panos/09-guitar-room.jpg",
+      "thumb": "thumbs/09-guitar-room.jpg",
+      "initialYaw": 0,
+      "links": [
+        {
+          "to": "12-hallway",
+          "yaw": 70,
+          "pitch": -10,
+          "estimated": false
+        }
+      ]
+    },
+    {
+      "id": "10-twin-bedroom",
+      "name": "Twin Bedroom",
+      "pano": "panos/10-twin-bedroom.jpg",
+      "thumb": "thumbs/10-twin-bedroom.jpg",
+      "initialYaw": 0,
+      "links": [
+        {
+          "to": "12-hallway",
+          "yaw": 172,
+          "pitch": -10,
+          "estimated": false
+        }
+      ]
+    },
+    {
+      "id": "11-primary-bathroom",
+      "name": "Primary Bathroom",
+      "pano": "panos/11-primary-bathroom.jpg",
+      "thumb": "thumbs/11-primary-bathroom.jpg",
+      "initialYaw": 0,
+      "links": [
+        {
+          "to": "12-hallway",
+          "yaw": -70,
+          "pitch": -10,
+          "estimated": false
+        }
+      ]
+    },
+    {
+      "id": "12-hallway",
+      "name": "Hallway",
+      "pano": "panos/12-hallway.jpg",
+      "thumb": "thumbs/12-hallway.jpg",
+      "initialYaw": 0,
+      "links": [
+        {
+          "to": "10-twin-bedroom",
+          "yaw": -165,
+          "pitch": -10,
+          "estimated": false
+        },
+        {
+          "to": "11-primary-bathroom",
+          "yaw": -45,
+          "pitch": -10,
+          "estimated": false
+        },
+        {
+          "to": "14-dining-room",
+          "yaw": 38,
+          "pitch": -12,
+          "estimated": false
+        },
+        {
+          "to": "09-guitar-room",
+          "yaw": 82,
+          "pitch": -10,
+          "estimated": false
+        }
+      ]
+    },
+    {
+      "id": "13-living-room",
+      "name": "Living Room",
+      "pano": "panos/13-living-room.jpg",
+      "thumb": "thumbs/13-living-room.jpg",
+      "initialYaw": 0,
+      "links": [
+        {
+          "to": "08-bedroom-2",
+          "yaw": -18,
+          "pitch": -10,
+          "estimated": false
+        },
+        {
+          "to": "14-dining-room",
+          "yaw": 95,
+          "pitch": -12,
+          "estimated": false
+        }
+      ]
+    },
+    {
+      "id": "14-dining-room",
+      "name": "Dining Room",
+      "pano": "panos/14-dining-room.jpg",
+      "thumb": "thumbs/14-dining-room.jpg",
+      "initialYaw": 0,
+      "links": [
+        {
+          "to": "15-kitchen",
+          "yaw": -55,
+          "pitch": -12,
+          "estimated": false
+        },
+        {
+          "to": "16-great-room",
+          "yaw": 75,
+          "pitch": -12,
+          "estimated": false
+        },
+        {
+          "to": "13-living-room",
+          "yaw": 150,
+          "pitch": -12,
+          "estimated": false
+        },
+        {
+          "to": "12-hallway",
+          "yaw": -150,
+          "pitch": -10,
+          "estimated": false
+        }
+      ]
+    },
+    {
+      "id": "15-kitchen",
+      "name": "Kitchen",
+      "pano": "panos/15-kitchen.jpg",
+      "thumb": "thumbs/15-kitchen.jpg",
+      "initialYaw": 0,
+      "links": [
+        {
+          "to": "14-dining-room",
+          "yaw": -5,
+          "pitch": -14,
+          "estimated": false
+        },
+        {
+          "to": "06-hall-bathroom",
+          "yaw": -35,
+          "pitch": -10,
+          "estimated": false
+        }
+      ]
+    },
+    {
+      "id": "16-great-room",
+      "name": "Great Room",
+      "pano": "panos/16-great-room.jpg",
+      "thumb": "thumbs/16-great-room.jpg",
+      "initialYaw": 0,
+      "links": [
+        {
+          "to": "07-music-loft",
+          "yaw": -165,
+          "pitch": -4,
+          "estimated": false
+        },
+        {
+          "to": "17-entry-foyer",
+          "yaw": -22,
+          "pitch": -10,
+          "estimated": false
+        },
+        {
+          "to": "14-dining-room",
+          "yaw": 55,
+          "pitch": -12,
+          "estimated": false
+        },
+        {
+          "to": "18-family-room",
+          "yaw": 150,
+          "pitch": -12,
+          "estimated": false
+        }
+      ]
+    },
+    {
+      "id": "17-entry-foyer",
+      "name": "Entry Foyer",
+      "pano": "panos/17-entry-foyer.jpg",
+      "thumb": "thumbs/17-entry-foyer.jpg",
+      "initialYaw": 0,
+      "links": [
+        {
+          "to": "22-front-entry",
+          "yaw": -148,
+          "pitch": -8,
+          "estimated": false
+        },
+        {
+          "to": "16-great-room",
+          "yaw": 40,
+          "pitch": -14,
+          "estimated": false
+        }
+      ]
+    },
+    {
+      "id": "18-family-room",
+      "name": "Family Room",
+      "pano": "panos/18-family-room.jpg",
+      "thumb": "thumbs/18-family-room.jpg",
+      "initialYaw": 0,
+      "links": [
+        {
+          "to": "19-pool-lanai",
+          "yaw": -155,
+          "pitch": -12,
+          "estimated": false
+        },
+        {
+          "to": "16-great-room",
+          "yaw": 55,
+          "pitch": -10,
+          "estimated": false
+        }
+      ]
+    },
+    {
+      "id": "19-pool-lanai",
+      "name": "Pool Lanai",
+      "pano": "panos/19-pool-lanai.jpg",
+      "thumb": "thumbs/19-pool-lanai.jpg",
+      "initialYaw": 0,
+      "links": [
+        {
+          "to": "20-pool",
+          "yaw": -55,
+          "pitch": -14,
+          "estimated": false
+        },
+        {
+          "to": "18-family-room",
+          "yaw": 5,
+          "pitch": -8,
+          "estimated": false
+        },
+        {
+          "to": "21-lanai-billiards",
+          "yaw": 120,
+          "pitch": -14,
+          "estimated": false
+        }
+      ]
+    },
+    {
+      "id": "20-pool",
+      "name": "Pool",
+      "pano": "panos/20-pool.jpg",
+      "thumb": "thumbs/20-pool.jpg",
+      "initialYaw": 0,
+      "links": [
+        {
+          "to": "19-pool-lanai",
+          "yaw": -45,
+          "pitch": -12,
+          "estimated": false
+        },
+        {
+          "to": "21-lanai-billiards",
+          "yaw": -25,
+          "pitch": -12,
+          "estimated": false
+        }
+      ]
+    },
+    {
+      "id": "21-lanai-billiards",
+      "name": "Lanai Billiards",
+      "pano": "panos/21-lanai-billiards.jpg",
+      "thumb": "thumbs/21-lanai-billiards.jpg",
+      "initialYaw": 0,
+      "links": [
+        {
+          "to": "20-pool",
+          "yaw": -155,
+          "pitch": -12,
+          "estimated": false
+        },
+        {
+          "to": "19-pool-lanai",
+          "yaw": -110,
+          "pitch": -12,
+          "estimated": false
+        }
+      ]
+    },
+    {
+      "id": "22-front-entry",
+      "name": "Front Entry",
+      "pano": "panos/22-front-entry.jpg",
+      "thumb": "thumbs/22-front-entry.jpg",
+      "initialYaw": 0,
+      "links": [
+        {
+          "to": "17-entry-foyer",
+          "yaw": -170,
+          "pitch": -6,
+          "estimated": false
+        }
+      ]
+    }
+  ]
+}
