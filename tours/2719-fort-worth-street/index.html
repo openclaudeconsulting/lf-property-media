@@ -235,6 +235,22 @@
   .hot__edit:active{transform:scale(.94);}
   body[data-authoring="true"] .hot__edit{display:grid;}
   .hot--sel{box-shadow:0 0 0 2.5px var(--lf-sand-light) inset, 0 0 0 3px rgba(176,137,104,.55), 0 3px 14px rgba(0,0,0,.5);}
+
+  /* With the editor open the circles are grabbable, so say so with the cursor
+     rather than expecting anyone to read an instruction. */
+  body[data-authoring="true"] .hot{cursor:grab;}
+  body[data-authoring="true"] .hot:active{cursor:grabbing;}
+  .hot--ghosted{opacity:.25;}
+  .hot--ghosted::before{animation:none;}
+
+  /* The circle you are actually dragging. Rides the cursor at 1:1 so the
+     hotspot appears to come off the wall and follow your hand. */
+  #ghost{
+    position:fixed; display:none; z-index:45; pointer-events:none;
+    transform:translate(-50%,-50%) scale(1.12);
+    box-shadow:0 0 0 2px rgba(250,248,245,.95) inset, 0 6px 22px rgba(0,0,0,.65);
+  }
+  #ghost[data-on="true"]{display:grid;}
   @keyframes pulse{
     0%{transform:scale(.86); opacity:.9}
     70%{transform:scale(1.28); opacity:0}
@@ -333,6 +349,7 @@
 
 <div id="stage"></div>
 <div id="progress" role="progressbar" aria-label="Loading room"></div>
+<div id="ghost" class="hot" aria-hidden="true"><span></span></div>
 
 <div class="caption">
   <div class="caption__idx" id="capIdx">—</div>
@@ -352,21 +369,19 @@
   <h2>Hotspot editor</h2>
 
   <div id="edAdd">
-    <p>Pick a room, then <strong>click the doorway</strong> that leads there.
-       A <em>sand</em> ring means the position is still an estimate; a
-       <em>white</em> ring means you placed it. Use the <strong>pencil</strong>
-       on a hotspot to edit one that already exists.</p>
+    <p><strong>Drag any circle</strong> to move it.<br />
+       <strong>Click its pencil</strong> to change the room or delete it.<br />
+       To add a new one, pick a room below and click the doorway.</p>
     <select id="destSel" aria-label="Destination room"></select>
   </div>
 
   <div id="edSel" hidden>
-    <p>Editing the link to <strong id="edName">—</strong>.</p>
+    <p>This circle goes to <strong id="edName">—</strong>.</p>
     <select id="edRoom" aria-label="Change destination room"></select>
     <div class="row">
-      <button class="act" id="btnMove" aria-pressed="false">Move</button>
       <button class="act" id="btnDelSel">Delete</button>
+      <button class="act" id="btnDone">Done</button>
     </div>
-    <button class="act" id="btnDone">Done</button>
   </div>
 
   <div class="row">
@@ -591,12 +606,10 @@ function ensureReturn(fromId, toId) {
 
 /* --- selection ------------------------------------------------------------ */
 let selectedTo = null;   // nodeId of the link being edited, in the current scene
-let moveArmed = false;
 
 const edAdd = document.getElementById('edAdd');
 const edSel = document.getElementById('edSel');
 const edRoom = document.getElementById('edRoom');
-const btnMove = document.getElementById('btnMove');
 
 function markSelected() {
   for (const pen of document.querySelectorAll('.hot__edit')) {
@@ -605,8 +618,6 @@ function markSelected() {
 }
 function select(to) {
   selectedTo = to;
-  moveArmed = false;
-  btnMove.setAttribute('aria-pressed', 'false');
   edSel.hidden = false;
   edAdd.hidden = true;
   document.getElementById('edName').textContent = byId.get(to).name;
@@ -616,12 +627,87 @@ function select(to) {
 }
 function deselect() {
   selectedTo = null;
-  moveArmed = false;
-  btnMove.setAttribute('aria-pressed', 'false');
   edSel.hidden = true;
   edAdd.hidden = false;
   markSelected();
 }
+
+/* --- drag a circle to move it --------------------------------------------
+   Direct manipulation rather than "press Move, then click over there": the
+   circle comes off the wall, rides the cursor, and lands where it is dropped.
+   PSV owns pointer events on its container for camera rotation, so a drag that
+   starts on a hotspot is swallowed in the capture phase -- otherwise the room
+   would spin while the circle is being dragged, and the plugin would also read
+   the gesture as a click and walk through the doorway. */
+const stage = document.getElementById('stage');
+const ghost = document.getElementById('ghost');
+let dragging = null;
+
+function screenToSphere(e) {
+  const r = viewer.container.getBoundingClientRect();
+  return viewer.dataHelper.viewerCoordsToSphericalCoords({
+    x: e.clientX - r.left, y: e.clientY - r.top,
+  });
+}
+
+stage.addEventListener('pointerdown', (e) => {
+  if (!authoring || e.button !== 0) return;
+  const hot = e.target.closest?.('.hot');
+  if (!hot || e.target.closest('.hot__edit')) return;
+  const to = hot.querySelector('.hot__edit')?.dataset.to;
+  if (!to) return;
+
+  e.stopPropagation();
+  e.preventDefault();
+  dragging = { to, hot };
+  hot.classList.add('hot--ghosted');
+  ghost.className = hot.classList.contains('hot--est') ? 'hot hot--est' : 'hot';
+  ghost.dataset.on = 'true';
+  ghost.style.left = `${e.clientX}px`;
+  ghost.style.top = `${e.clientY}px`;
+  select(to);
+  // Keeps the drag alive if the cursor leaves the element; harmless if the
+  // pointer is already gone.
+  try { stage.setPointerCapture(e.pointerId); } catch { /* not capturable */ }
+}, true);
+
+stage.addEventListener('pointermove', (e) => {
+  if (!dragging) return;
+  e.stopPropagation();
+  ghost.style.left = `${e.clientX}px`;
+  ghost.style.top = `${e.clientY}px`;
+}, true);
+
+function endDrag(e, commit) {
+  const { to, hot } = dragging;
+  dragging = null;
+  ghost.dataset.on = 'false';
+  hot.classList.remove('hot--ghosted');
+  try { stage.releasePointerCapture(e.pointerId); } catch { /* already gone */ }
+  if (!commit) return;
+
+  const sph = screenToSphere(e);
+  if (!sph) return say('Dropped outside the room — nothing moved');
+  const link = byId.get(currentId).links.find(l => l.to === to);
+  if (!link) return;
+  snapshot();
+  link.yaw = ((sph.yaw / deg + 540) % 360) - 180;
+  link.pitch = sph.pitch / deg;
+  link.estimated = false;
+  rebuild(currentId);
+  say(`Moved the ${byId.get(to).name} circle`);
+}
+
+stage.addEventListener('pointerup', (e) => {
+  if (!dragging) return;
+  e.stopPropagation();
+  endDrag(e, true);
+}, true);
+
+stage.addEventListener('pointercancel', (e) => {
+  if (!dragging) return;
+  endDrag(e, false);
+}, true);
 
 /* The plugin navigates on any click that lands inside an arrow, so the pencil
    has to be caught on the way down -- #stage is above the viewer's own
@@ -640,7 +726,7 @@ document.getElementById('btnAuthor').addEventListener('click', (e) => {
   authorPanel.dataset.open = String(authoring);
   document.body.dataset.authoring = String(authoring);
   e.currentTarget.setAttribute('aria-pressed', String(authoring));
-  if (authoring) { refreshDest(); stats(); say('Click a doorway, or a pencil to edit'); }
+  if (authoring) { refreshDest(); stats(); say('Drag a circle to move it'); }
   else deselect();
 });
 
@@ -648,19 +734,6 @@ viewer.addEventListener('click', ({ data }) => {
   if (!authoring || data.rightclick) return;
   const yaw = ((data.yaw / deg + 540) % 360) - 180;
   const pitch = data.pitch / deg;
-
-  if (selectedTo && moveArmed) {
-    const link = byId.get(currentId).links.find(l => l.to === selectedTo);
-    if (link) {
-      snapshot();
-      link.yaw = yaw; link.pitch = pitch; link.estimated = false;
-      moveArmed = false;
-      btnMove.setAttribute('aria-pressed', 'false');
-      rebuild(currentId);
-      say(`Moved → yaw ${yaw.toFixed(1)}°, pitch ${pitch.toFixed(1)}°`);
-    }
-    return;
-  }
 
   const to = destSel.value;
   if (!to || selectedTo) return;
@@ -672,13 +745,6 @@ viewer.addEventListener('click', ({ data }) => {
   ensureReturn(currentId, to);
   rebuild(currentId);
   say(`${byId.get(to).name} → yaw ${yaw.toFixed(1)}°, pitch ${pitch.toFixed(1)}°`);
-});
-
-btnMove.addEventListener('click', () => {
-  if (!selectedTo) return;
-  moveArmed = !moveArmed;
-  btnMove.setAttribute('aria-pressed', String(moveArmed));
-  say(moveArmed ? 'Click where the link should sit' : 'Move cancelled');
 });
 
 edRoom.addEventListener('change', () => {
