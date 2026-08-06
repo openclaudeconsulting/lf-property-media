@@ -3,8 +3,8 @@
 The source folder still holds all 24 tripod positions, so a rebuild always
 produces 24 panoramas. The owner chose to drop two of them (the duplicate hall
 bathroom, and the duller of the two pool frames), so this re-applies that
-decision, renumbers 1..22, writes the room names, and regenerates the web-sized
-copies the tour serves.
+decision, renumbers 1..22, writes the room names, and republishes the panoramas
+and thumbnails the tour serves.
 
 It does the rename itself rather than going through `pano_hdr.py label`, because
 that subcommand takes its number prefix from the manifest's build index -- which
@@ -15,6 +15,7 @@ Run from the repo root after `build` finishes.
 from __future__ import annotations
 
 import json
+import os
 import re
 import shutil
 import sys
@@ -27,7 +28,11 @@ import pano_hdr as P  # noqa: E402
 
 Image.MAX_IMAGE_PIXELS = None
 
-BUILT = Path("Filing System/Final/Preferred Shore LLC/06-13 2719 Fort Worth/360")
+# The job media is gitignored, so it exists only in the canonical project folder
+# and a git worktree cannot reach it through a repo-relative path. Same env var
+# the other tools in this folder already use.
+JOBS = Path(os.environ.get("LF_JOBS_BASE") or "Filing System")
+BUILT = JOBS / "Final/Preferred Shore LLC/06-13 2719 Fort Worth/360"
 TOUR = Path("tours/2719-fort-worth-street")
 
 # Build index -> room name. The two the owner dropped map to None.
@@ -120,11 +125,16 @@ def main() -> int:
         shutil.rmtree(TOUR / sub, ignore_errors=True)
         (TOUR / sub).mkdir(parents=True, exist_ok=True)
     for f in finals:
-        im = Image.open(f).convert("RGB")
-        im.resize((4096, 2048), Image.LANCZOS).save(
-            TOUR / "panos" / f.name, "JPEG", quality=88, optimize=True, progressive=True)
-        im.resize((400, 200), Image.LANCZOS).save(
-            TOUR / "thumbs" / f.name, "JPEG", quality=80, optimize=True)
+        # Copied, not re-encoded. The master is already progressive 4:4:4 at the
+        # camera's native 6080x3040, and pano_hdr's output sharpening was applied
+        # at that size -- resampling to 4096 here softened exactly what that
+        # sharpening had just crispened, on top of discarding a third of the
+        # linear detail a visitor can now zoom into. Copying also carries the
+        # GPano tags over untouched.
+        shutil.copy2(f, TOUR / "panos" / f.name)
+        with Image.open(f) as im:
+            im.convert("RGB").resize((400, 200), Image.LANCZOS).save(
+                TOUR / "thumbs" / f.name, "JPEG", quality=80, optimize=True)
 
     # The scene ids in tour.json are the filenames; a drift would break links.
     tour = json.loads((TOUR / "tour.json").read_text(encoding="utf-8"))
@@ -137,7 +147,7 @@ def main() -> int:
 
     mb = sum(p.stat().st_size for p in (TOUR / "panos").glob("*.jpg")) / 1e6
     print(f"finalised {len(finals)} panoramas, numbered 01..22")
-    print(f"regenerated web copies ({mb:.0f} MB) + thumbs")
+    print(f"published panoramas at native resolution ({mb:.0f} MB) + thumbs")
     print("scene ids match tour.json — all 44 hotspots preserved")
     return 0
 
