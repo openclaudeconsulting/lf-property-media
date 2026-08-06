@@ -52,6 +52,18 @@
   #stage{position:fixed; inset:0 0 var(--rail-h) 0; background:#0d0b09;}
   .psv-container{background:#0d0b09;}
 
+  /* PSV drops a grey "Loading..." disc in the middle of the photograph while a
+     panorama downloads. Replaced by the hairline below, which sits on the top
+     edge and never covers the image. */
+  .psv-loader-container{display:none !important;}
+  #progress{
+    position:fixed; top:0; left:0; height:2px; width:0; z-index:50;
+    background:linear-gradient(90deg,var(--lf-sand),var(--lf-sand-light));
+    opacity:0; pointer-events:none;
+    transition:width .18s var(--ease-out), opacity .3s var(--ease-out);
+  }
+  #progress[data-on="true"]{opacity:1;}
+
   /* Grain + vignette so the frame reads as a photographic surface, not a canvas. */
   #stage::after{
     content:""; position:absolute; inset:0; pointer-events:none; z-index:2;
@@ -205,6 +217,24 @@
     filter:drop-shadow(0 1px 3px rgba(0,0,0,.65));
   }
   .hot--est{box-shadow:0 0 0 1.5px var(--lf-sand-light) inset, 0 3px 14px rgba(0,0,0,.5);}
+
+  /* Pencil badge -- only exists while the editor is open, so a viewer never
+     sees it. Sits on the bubble so a link can be edited where it lives rather
+     than hunted for in a list. */
+  .hot__edit{
+    display:none; position:absolute; top:-8px; right:-8px;
+    width:19px; height:19px; place-items:center; padding:0; cursor:pointer;
+    border:1px solid rgba(250,248,245,.55); border-radius:50%;
+    background:var(--lf-sand-dark); box-shadow:var(--lift-1); outline-offset:2px;
+    transition:transform .28s var(--ease-spring), background-color .28s var(--ease-out);
+  }
+  .hot__edit svg{width:10px; height:10px; stroke:var(--lf-paper); fill:none;
+                 stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round;}
+  .hot__edit:hover{background:var(--lf-sand); transform:scale(1.14);}
+  .hot__edit:focus-visible{outline:2px solid var(--lf-sand-light);}
+  .hot__edit:active{transform:scale(.94);}
+  body[data-authoring="true"] .hot__edit{display:grid;}
+  .hot--sel{box-shadow:0 0 0 2.5px var(--lf-sand-light) inset, 0 0 0 3px rgba(176,137,104,.55), 0 3px 14px rgba(0,0,0,.5);}
   @keyframes pulse{
     0%{transform:scale(.86); opacity:.9}
     70%{transform:scale(1.28); opacity:0}
@@ -302,6 +332,7 @@
 </header>
 
 <div id="stage"></div>
+<div id="progress" role="progressbar" aria-label="Loading room"></div>
 
 <div class="caption">
   <div class="caption__idx" id="capIdx">—</div>
@@ -319,15 +350,29 @@
 
 <section class="author" id="author" aria-label="Hotspot editor">
   <h2>Hotspot editor</h2>
-  <p>Pick a destination, then <strong>click the doorway</strong> in the panorama.
-     Clicking again moves that link. A <em>sand</em> ring means the position is
-     still an estimate; a <em>white</em> ring means you placed it.</p>
-  <select id="destSel" aria-label="Destination room"></select>
+
+  <div id="edAdd">
+    <p>Pick a room, then <strong>click the doorway</strong> that leads there.
+       A <em>sand</em> ring means the position is still an estimate; a
+       <em>white</em> ring means you placed it. Use the <strong>pencil</strong>
+       on a hotspot to edit one that already exists.</p>
+    <select id="destSel" aria-label="Destination room"></select>
+  </div>
+
+  <div id="edSel" hidden>
+    <p>Editing the link to <strong id="edName">—</strong>.</p>
+    <select id="edRoom" aria-label="Change destination room"></select>
+    <div class="row">
+      <button class="act" id="btnMove" aria-pressed="false">Move</button>
+      <button class="act" id="btnDelSel">Delete</button>
+    </div>
+    <button class="act" id="btnDone">Done</button>
+  </div>
+
   <div class="row">
     <button class="act" id="btnUndo">Undo</button>
-    <button class="act" id="btnDel">Remove link</button>
+    <button class="act" id="btnExport">Download tour.json</button>
   </div>
-  <button class="act" id="btnExport">Download tour.json</button>
   <div class="stat"><span>Confirmed</span><b id="statConf">0 / 0</b></div>
 </section>
 
@@ -434,6 +479,15 @@ const viewer = new Viewer({
           const b = document.createElement('div');
           b.className = link.estimated ? 'hot hot--est' : 'hot';
           b.innerHTML = '<span></span>';
+          const pen = document.createElement('button');
+          pen.type = 'button';
+          pen.className = 'hot__edit';
+          pen.dataset.to = link.nodeId;
+          pen.title = 'Edit this link';
+          pen.setAttribute('aria-label', 'Edit this link');
+          pen.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true">'
+            + '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
+          b.appendChild(pen);
           return b;
         },
         size: { width: 36, height: 36 },
@@ -444,6 +498,21 @@ const viewer = new Viewer({
 
 const vt = viewer.getPlugin(VirtualTourPlugin);
 const markers = viewer.getPlugin(MarkersPlugin);
+
+/* Load feedback lives on the top edge instead of a disc over the photograph. */
+const progress = document.getElementById('progress');
+let progressDone;
+viewer.addEventListener('load-progress', ({ progress: pct }) => {
+  clearTimeout(progressDone);
+  progress.dataset.on = 'true';
+  progress.style.width = `${Math.max(3, Math.min(100, pct))}%`;
+});
+viewer.addEventListener('panorama-loaded', () => {
+  progress.style.width = '100%';
+  progress.dataset.on = 'false';
+  // Reset only once the fade-out has finished, so it never snaps back visibly.
+  progressDone = setTimeout(() => { progress.style.width = '0'; }, 320);
+});
 
 viewer.addEventListener('ready', () => { boot.hidden = true; }, { once: true });
 viewer.addEventListener('panorama-error', (e) => fail(`Panorama failed to load: ${e.error?.message ?? e}`));
@@ -501,52 +570,155 @@ function rebuild(id) {
     })),
   })), id);
   stats();
+  markSelected();
 }
+
+/* One snapshot of the whole graph per edit. Links are reciprocal, so a single
+   action touches two scenes -- undoing only the scene you were standing in
+   would leave the other half behind. */
+function snapshot() { undo.push(JSON.stringify(scenes.map(s => s.links))); }
+
+function unlink(fromId, toId) {
+  byId.get(fromId).links = byId.get(fromId).links.filter(l => l.to !== toId);
+  byId.get(toId).links = byId.get(toId).links.filter(l => l.to !== fromId);
+}
+function ensureReturn(fromId, toId) {
+  const back = byId.get(toId);
+  if (!back.links.some(l => l.to === fromId)) {
+    back.links.push({ to: fromId, yaw: 0, pitch: -8, estimated: true });
+  }
+}
+
+/* --- selection ------------------------------------------------------------ */
+let selectedTo = null;   // nodeId of the link being edited, in the current scene
+let moveArmed = false;
+
+const edAdd = document.getElementById('edAdd');
+const edSel = document.getElementById('edSel');
+const edRoom = document.getElementById('edRoom');
+const btnMove = document.getElementById('btnMove');
+
+function markSelected() {
+  for (const pen of document.querySelectorAll('.hot__edit')) {
+    pen.closest('.hot')?.classList.toggle('hot--sel', pen.dataset.to === selectedTo);
+  }
+}
+function select(to) {
+  selectedTo = to;
+  moveArmed = false;
+  btnMove.setAttribute('aria-pressed', 'false');
+  edSel.hidden = false;
+  edAdd.hidden = true;
+  document.getElementById('edName').textContent = byId.get(to).name;
+  edRoom.innerHTML = scenes.filter(s => s.id !== currentId)
+    .map(s => `<option value="${s.id}"${s.id === to ? ' selected' : ''}>${s.name}</option>`).join('');
+  markSelected();
+}
+function deselect() {
+  selectedTo = null;
+  moveArmed = false;
+  btnMove.setAttribute('aria-pressed', 'false');
+  edSel.hidden = true;
+  edAdd.hidden = false;
+  markSelected();
+}
+
+/* The plugin navigates on any click that lands inside an arrow, so the pencil
+   has to be caught on the way down -- #stage is above the viewer's own
+   container, and stopping here means the plugin never sees the click. */
+document.getElementById('stage').addEventListener('click', (e) => {
+  const pen = e.target.closest?.('.hot__edit');
+  if (!pen || !authoring) return;
+  e.stopPropagation();
+  e.preventDefault();
+  select(pen.dataset.to);
+  say(`Editing → ${byId.get(pen.dataset.to).name}`);
+}, true);
 
 document.getElementById('btnAuthor').addEventListener('click', (e) => {
   authoring = !authoring;
   authorPanel.dataset.open = String(authoring);
+  document.body.dataset.authoring = String(authoring);
   e.currentTarget.setAttribute('aria-pressed', String(authoring));
-  if (authoring) { refreshDest(); stats(); say('Click a doorway to place a link'); }
+  if (authoring) { refreshDest(); stats(); say('Click a doorway, or a pencil to edit'); }
+  else deselect();
 });
 
 viewer.addEventListener('click', ({ data }) => {
   if (!authoring || data.rightclick) return;
-  const to = destSel.value;
-  if (!to) return;
-  const scene = byId.get(currentId);
   const yaw = ((data.yaw / deg + 540) % 360) - 180;
   const pitch = data.pitch / deg;
 
-  undo.push(JSON.parse(JSON.stringify({ id: currentId, links: scene.links })));
+  if (selectedTo && moveArmed) {
+    const link = byId.get(currentId).links.find(l => l.to === selectedTo);
+    if (link) {
+      snapshot();
+      link.yaw = yaw; link.pitch = pitch; link.estimated = false;
+      moveArmed = false;
+      btnMove.setAttribute('aria-pressed', 'false');
+      rebuild(currentId);
+      say(`Moved → yaw ${yaw.toFixed(1)}°, pitch ${pitch.toFixed(1)}°`);
+    }
+    return;
+  }
+
+  const to = destSel.value;
+  if (!to || selectedTo) return;
+  const scene = byId.get(currentId);
+  snapshot();
   const existing = scene.links.find(l => l.to === to);
   if (existing) { existing.yaw = yaw; existing.pitch = pitch; existing.estimated = false; }
   else scene.links.push({ to, yaw, pitch, estimated: false });
-
-  // Keep the graph reciprocal; the return link stays estimated until placed.
-  const back = byId.get(to);
-  if (!back.links.some(l => l.to === currentId)) {
-    back.links.push({ to: currentId, yaw: 0, pitch: -8, estimated: true });
-  }
+  ensureReturn(currentId, to);
   rebuild(currentId);
   say(`${byId.get(to).name} → yaw ${yaw.toFixed(1)}°, pitch ${pitch.toFixed(1)}°`);
+});
+
+btnMove.addEventListener('click', () => {
+  if (!selectedTo) return;
+  moveArmed = !moveArmed;
+  btnMove.setAttribute('aria-pressed', String(moveArmed));
+  say(moveArmed ? 'Click where the link should sit' : 'Move cancelled');
+});
+
+edRoom.addEventListener('change', () => {
+  const to = edRoom.value;
+  if (!selectedTo || to === selectedTo) return;
+  const link = byId.get(currentId).links.find(l => l.to === selectedTo);
+  if (!link) return;
+  snapshot();
+  const { yaw, pitch, estimated } = link;
+  unlink(currentId, selectedTo);
+  byId.get(currentId).links.push({ to, yaw, pitch, estimated });
+  ensureReturn(currentId, to);
+  selectedTo = to;
+  document.getElementById('edName').textContent = byId.get(to).name;
+  rebuild(currentId);
+  say(`Now points at ${byId.get(to).name}`);
+});
+
+document.getElementById('btnDelSel').addEventListener('click', () => {
+  if (!selectedTo) return;
+  const name = byId.get(selectedTo).name;
+  snapshot();
+  unlink(currentId, selectedTo);   // both directions, so the graph stays sane
+  deselect();
+  rebuild(currentId);
+  say(`Deleted the link to ${name}`);
+});
+
+document.getElementById('btnDone').addEventListener('click', () => {
+  deselect();
+  say('Done editing');
 });
 
 document.getElementById('btnUndo').addEventListener('click', () => {
   const prev = undo.pop();
   if (!prev) return say('Nothing to undo');
-  byId.get(prev.id).links = prev.links;
+  JSON.parse(prev).forEach((links, i) => { scenes[i].links = links; });
+  if (selectedTo && !byId.get(currentId).links.some(l => l.to === selectedTo)) deselect();
   rebuild(currentId);
   say('Reverted');
-});
-
-document.getElementById('btnDel').addEventListener('click', () => {
-  const to = destSel.value;
-  const scene = byId.get(currentId);
-  undo.push(JSON.parse(JSON.stringify({ id: currentId, links: scene.links })));
-  scene.links = scene.links.filter(l => l.to !== to);
-  rebuild(currentId);
-  say(`Removed link to ${byId.get(to).name}`);
 });
 
 document.getElementById('btnExport').addEventListener('click', () => {
@@ -559,7 +731,8 @@ document.getElementById('btnExport').addEventListener('click', () => {
   say('tour.json downloaded');
 });
 
-vt.addEventListener('node-changed', refreshDest);
+// A selection belongs to the room you were standing in, so leaving clears it.
+vt.addEventListener('node-changed', () => { deselect(); refreshDest(); });
 
 /* ---------------------------------------------------------------- keys */
 document.getElementById('btnFull').addEventListener('click', () => viewer.toggleFullscreen());
