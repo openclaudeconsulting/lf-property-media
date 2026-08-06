@@ -409,6 +409,7 @@
 import { Viewer } from '@photo-sphere-viewer/core';
 import { MarkersPlugin } from '@photo-sphere-viewer/markers-plugin';
 import { VirtualTourPlugin } from '@photo-sphere-viewer/virtual-tour-plugin';
+import { fovModel, hToV, vToH, clamp } from './fov.js';
 
 const boot = document.getElementById('boot');
 const bootErr = document.getElementById('bootErr');
@@ -463,16 +464,24 @@ const nodes = scenes.map(s => ({
 // drag is already fine and is left alone.
 const coarsePointer = matchMedia('(pointer: coarse)').matches;
 
+// Zoom is specified in *horizontal* FOV and converted per viewport shape. The
+// maths, and the reasoning for it, live in fov.js -- shared with the tuning
+// harness at /tools/fov-tuner.html so the two cannot drift apart.
+const stage = document.getElementById('stage');
+const aspect = () => Math.max(stage.clientWidth, 1) / Math.max(stage.clientHeight, 1);
+const fov = fovModel();
+
+const initialBounds = fov.boundsFor(aspect());
+
 const viewer = new Viewer({
-  container: document.getElementById('stage'),
+  container: stage,
   defaultYaw: 0,
   navbar: false,
   loadingImg: null,
   touchmoveTwoFingers: false,
   mousewheelCtrlKey: false,
-  // 90 is the PSV default; a little wider lets people take in a whole room
-  // without pushing the equirect distortion far enough to look fisheyed.
-  maxFov: 100,
+  ...initialBounds,
+  defaultZoomLvl: fov.startZoom(aspect()),
   moveSpeed: coarsePointer ? 1.9 : 1.0,
   plugins: [
     MarkersPlugin,
@@ -513,6 +522,24 @@ const viewer = new Viewer({
 
 const vt = viewer.getPlugin(VirtualTourPlugin);
 const markers = viewer.getPlugin(MarkersPlugin);
+
+// Rotating a phone, or dragging a desktop window narrower, changes the viewport
+// shape. PSV holds the *vertical* FOV through that, so turning a phone sideways
+// silently doubles how much room is on screen. Hold the horizontal FOV instead:
+// convert what the visitor was seeing through the old shape, back through the
+// new one. Their own zooming is preserved -- only the aspect correction moves.
+let lastAspect = aspect();
+let lastBounds = initialBounds;
+viewer.addEventListener('size-updated', () => {
+  const a = aspect();
+  if (!isFinite(a) || a <= 0 || Math.abs(a - lastAspect) < 1e-3) return;
+  const seen = vToH(fov.vFovOf(viewer.getZoomLevel(), lastBounds), lastAspect);
+  const b = fov.boundsFor(a);
+  viewer.setOptions(b);
+  lastAspect = a;
+  lastBounds = b;
+  viewer.zoom(fov.zoomFor(clamp(hToV(seen, a), b.minFov, b.maxFov), b));
+});
 
 /* Load feedback lives on the top edge instead of a disc over the photograph. */
 const progress = document.getElementById('progress');
@@ -639,7 +666,6 @@ function deselect() {
    starts on a hotspot is swallowed in the capture phase -- otherwise the room
    would spin while the circle is being dragged, and the plugin would also read
    the gesture as a click and walk through the doorway. */
-const stage = document.getElementById('stage');
 const ghost = document.getElementById('ghost');
 let dragging = null;
 

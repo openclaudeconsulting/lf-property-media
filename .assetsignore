@@ -9,6 +9,10 @@ README.md
 *.stl
 Dallas*.stl
 
+# Build scripts and internal tuning harnesses. robots.txt already disallows
+# /tools/, but that only asks crawlers nicely — this keeps them off the deploy.
+tools/
+
 # LF client job folders — never publish these to the live site
 Filing System/
 Real Estate/

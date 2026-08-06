@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex, nofollow" />
+<title>FOV Tuner — LF Property Media</title>
+
+<link rel="icon" href="/images/favicon.svg" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@photo-sphere-viewer/core@5.15.1/index.css" />
+
+<style>
+  :root{
+    --lf-paper:#faf8f5; --lf-cream:#f3ede2;
+    --lf-ink:#1a1a1a; --lf-ink-soft:#2b2b2b; --lf-muted:#6b6b6b;
+    --lf-sand:#b08968; --lf-sand-dark:#8c6a4e; --lf-sand-light:#d4b896;
+    --lf-border:#e8e2d5;
+
+    --panel:#1c1917; --panel-2:#262220; --hair:#3a332e;
+    --font-display:"Playfair Display",Georgia,serif;
+    --font-body:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+
+    --lift-1:0 1px 2px rgba(38,26,16,.28), 0 2px 8px rgba(38,26,16,.20);
+    --lift-2:0 2px 4px rgba(0,0,0,.30), 0 10px 30px rgba(0,0,0,.34);
+    --ease-out:cubic-bezier(.22,.68,.36,1);
+    --ease-spring:cubic-bezier(.34,1.42,.48,1);
+    --s1:.375rem; --s2:.625rem; --s3:1rem; --s4:1.5rem; --s5:2.25rem;
+  }
+  *,*::before,*::after{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0; background:var(--lf-ink); color:var(--lf-paper);
+    font-family:var(--font-body); -webkit-font-smoothing:antialiased;
+    display:grid; grid-template-columns:minmax(0,1fr) 392px; overflow:hidden;
+  }
+  @media (max-width:1080px){
+    body{grid-template-columns:1fr; grid-template-rows:minmax(0,1fr) auto; overflow:auto;}
+  }
+
+  /* ---------------------------------------------------------------- stage */
+  .arena{
+    display:flex; align-items:center; justify-content:center; padding:var(--s4);
+    min-width:0; min-height:0; overflow:hidden;
+    background:
+      radial-gradient(1100px 620px at 30% 12%, rgba(176,137,104,.16), transparent 62%),
+      radial-gradient(760px 520px at 82% 88%, rgba(140,106,78,.13), transparent 66%),
+      #0d0b09;
+  }
+  .frame{
+    position:relative; background:#0d0b09; box-shadow:var(--lift-2);
+    outline:1px solid var(--hair); max-width:100%; max-height:100%;
+  }
+  #stage{width:100%; height:100%;}
+  .frame__size{
+    position:absolute; left:0; bottom:-26px; font-size:11px; letter-spacing:.10em;
+    text-transform:uppercase; color:var(--lf-muted); white-space:nowrap;
+  }
+  .hud{
+    position:absolute; top:var(--s2); left:var(--s2); z-index:5;
+    display:flex; gap:6px; align-items:baseline; padding:8px 12px;
+    background:rgba(13,11,9,.76); backdrop-filter:blur(8px);
+    border:1px solid rgba(212,184,150,.22); border-radius:3px;
+    font-variant-numeric:tabular-nums; pointer-events:none;
+  }
+  .hud b{font-family:var(--font-display); font-size:26px; font-weight:500; line-height:1;}
+  .hud span{font-size:11px; letter-spacing:.10em; text-transform:uppercase; color:var(--lf-sand-light);}
+
+  /* ---------------------------------------------------------------- panel */
+  .panel{
+    background:var(--panel); border-left:1px solid var(--hair);
+    overflow-y:auto; padding:var(--s4) var(--s4) var(--s5);
+    display:flex; flex-direction:column; gap:var(--s4);
+  }
+  h1{
+    font-family:var(--font-display); font-weight:400; font-size:25px;
+    letter-spacing:-.02em; margin:0 0 4px;
+  }
+  h1 i{color:var(--lf-sand-light);}
+  .sub{margin:0; font-size:12.5px; line-height:1.65; color:var(--lf-muted);}
+  h2{
+    font-size:10.5px; letter-spacing:.15em; text-transform:uppercase;
+    color:var(--lf-sand-light); margin:0 0 var(--s2); font-weight:600;
+  }
+  .group{border-top:1px solid var(--hair); padding-top:var(--s3);}
+
+  /* ---------------------------------------------------------------- fields */
+  .field{margin-bottom:var(--s3);}
+  .field__top{display:flex; justify-content:space-between; align-items:baseline; gap:var(--s2);}
+  .field__label{font-size:13px;}
+  .field__note{font-size:11px; color:var(--lf-muted); margin:2px 0 var(--s1); line-height:1.5;}
+  .field__val{
+    font-family:var(--font-display); font-size:19px; color:var(--lf-sand-light);
+    font-variant-numeric:tabular-nums;
+  }
+  input[type=range]{
+    -webkit-appearance:none; appearance:none; width:100%; height:22px;
+    background:transparent; cursor:grab; display:block;
+  }
+  input[type=range]:active{cursor:grabbing;}
+  input[type=range]::-webkit-slider-runnable-track{
+    height:3px; border-radius:2px; background:var(--hair);
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none; appearance:none; width:16px; height:16px; margin-top:-6.5px;
+    border-radius:50%; background:var(--lf-sand); border:2px solid var(--panel);
+    box-shadow:var(--lift-1);
+    transition:transform .16s var(--ease-spring), background-color .16s var(--ease-out);
+  }
+  input[type=range]:hover::-webkit-slider-thumb{background:var(--lf-sand-light); transform:scale(1.14);}
+  input[type=range]:active::-webkit-slider-thumb{transform:scale(.94);}
+  input[type=range]:focus-visible{outline:none;}
+  input[type=range]:focus-visible::-webkit-slider-thumb{
+    outline:2px solid var(--lf-sand-light); outline-offset:2px;
+  }
+  input[type=range]::-moz-range-track{height:3px; border-radius:2px; background:var(--hair);}
+  input[type=range]::-moz-range-thumb{
+    width:14px; height:14px; border-radius:50%; background:var(--lf-sand);
+    border:2px solid var(--panel);
+  }
+
+  /* ---------------------------------------------------------------- buttons */
+  .row{display:flex; flex-wrap:wrap; gap:var(--s1);}
+  button, select{
+    font:inherit; color:var(--lf-paper); background:var(--panel-2);
+    border:1px solid var(--hair); border-radius:3px; padding:7px 11px;
+    font-size:11.5px; letter-spacing:.06em; cursor:pointer;
+    transition:background-color .16s var(--ease-out), border-color .16s var(--ease-out),
+               transform .16s var(--ease-spring), color .16s var(--ease-out);
+  }
+  button:hover, select:hover{background:#332d29; border-color:var(--lf-sand-dark);}
+  button:focus-visible, select:focus-visible{
+    outline:2px solid var(--lf-sand-light); outline-offset:2px;
+  }
+  button:active{transform:translateY(1px) scale(.985);}
+  button[aria-pressed="true"]{
+    background:var(--lf-sand); border-color:var(--lf-sand); color:#1a1410; font-weight:600;
+  }
+  select{width:100%; cursor:pointer;}
+  .btn--go{
+    flex:1; text-transform:uppercase; font-weight:600; font-size:10.5px; letter-spacing:.12em;
+  }
+
+  /* ---------------------------------------------------------------- table */
+  table{width:100%; border-collapse:collapse; font-size:11.5px; font-variant-numeric:tabular-nums;}
+  th,td{padding:5px 4px; text-align:right; border-bottom:1px solid var(--hair);}
+  th:first-child, td:first-child{text-align:left;}
+  th{font-size:9.5px; letter-spacing:.10em; text-transform:uppercase; color:var(--lf-muted); font-weight:600;}
+  td.warn{color:#e0a45f;}
+
+  /* ---------------------------------------------------------------- output */
+  pre{
+    margin:0; padding:var(--s2) var(--s3); background:#141110; border:1px solid var(--hair);
+    border-radius:3px; font-size:11px; line-height:1.75; overflow-x:auto;
+    color:var(--lf-sand-light); font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  .toast{
+    position:fixed; bottom:var(--s4); left:50%; transform:translate(-50%,14px);
+    background:var(--lf-sand); color:#1a1410; padding:9px 18px; border-radius:3px;
+    font-size:12px; font-weight:600; opacity:0; pointer-events:none;
+    box-shadow:var(--lift-2);
+    transition:opacity .22s var(--ease-out), transform .22s var(--ease-spring);
+  }
+  .toast[data-on="true"]{opacity:1; transform:translate(-50%,0);}
+  .err{
+    margin:0; padding:var(--s3); background:#3a1f1a; border:1px solid #7a3b30;
+    border-radius:3px; font-size:12.5px; line-height:1.6;
+  }
+</style>
+</head>
+<body>
+
+<div class="arena">
+  <div class="frame" id="frame">
+    <div class="hud">
+      <b id="hudH">—</b><span>deg wide</span>
+      <b id="hudV" style="margin-left:12px">—</b><span>deg tall</span>
+    </div>
+    <div id="stage"></div>
+    <div class="frame__size" id="frameSize"></div>
+  </div>
+</div>
+
+<aside class="panel">
+  <div>
+    <h1>Field of view <i>tuner</i></h1>
+    <p class="sub">Live Photo Sphere Viewer, running the tour's own zoom model. Every
+      number is horizontal FOV — how much of the room is on screen. Drag to look
+      around, scroll to zoom, and watch the readout.</p>
+  </div>
+
+  <p class="err" id="err" hidden></p>
+
+  <div class="group">
+    <h2>Room</h2>
+    <select id="room" aria-label="Room"></select>
+  </div>
+
+  <div class="group">
+    <h2>Viewport shape</h2>
+    <p class="field__note">The whole point of the model — a shape change must not
+      change how much room you see.</p>
+    <div class="row" id="shapes"></div>
+  </div>
+
+  <div class="group">
+    <h2>Horizontal targets</h2>
+
+    <div class="field">
+      <div class="field__top">
+        <label class="field__label" for="hStart">Opening view</label>
+        <span class="field__val" id="hStartVal"></span>
+      </div>
+      <p class="field__note">What a visitor lands on.</p>
+      <input type="range" id="hStart" min="40" max="170" step="1" />
+    </div>
+
+    <div class="field">
+      <div class="field__top">
+        <label class="field__label" for="hIn">Closest zoom</label>
+        <span class="field__val" id="hInVal"></span>
+      </div>
+      <p class="field__note">Lower is tighter. Below ~20° the 6080px panorama runs out of detail.</p>
+      <input type="range" id="hIn" min="8" max="170" step="1" />
+    </div>
+
+    <div class="field">
+      <div class="field__top">
+        <label class="field__label" for="hOut">Widest zoom</label>
+        <span class="field__val" id="hOutVal"></span>
+      </div>
+      <p class="field__note">Higher pulls back further. Past ~150° the room starts to bulge.</p>
+      <input type="range" id="hOut" min="60" max="178" step="1" />
+    </div>
+  </div>
+
+  <div class="group">
+    <h2>Vertical ceilings</h2>
+    <p class="field__note">A tall viewport can only hit a wide horizontal FOV by going
+      very wide vertically. These stop a phone opening fisheyed — it opens tighter instead.</p>
+
+    <div class="field">
+      <div class="field__top">
+        <label class="field__label" for="vCeilStart">Opening ceiling</label>
+        <span class="field__val" id="vCeilStartVal"></span>
+      </div>
+      <input type="range" id="vCeilStart" min="50" max="178" step="1" />
+    </div>
+
+    <div class="field">
+      <div class="field__top">
+        <label class="field__label" for="vCeilOut">Zoom-out ceiling</label>
+        <span class="field__val" id="vCeilOutVal"></span>
+      </div>
+      <input type="range" id="vCeilOut" min="60" max="178" step="1" />
+    </div>
+  </div>
+
+  <div class="group">
+    <h2>Jump to</h2>
+    <div class="row">
+      <button class="btn--go" id="goOpen" type="button">Opening</button>
+      <button class="btn--go" id="goIn" type="button">Closest</button>
+      <button class="btn--go" id="goOut" type="button">Widest</button>
+    </div>
+  </div>
+
+  <div class="group">
+    <h2>What this config delivers</h2>
+    <table>
+      <thead>
+        <tr><th>Viewport</th><th>Opens</th><th>Closest</th><th>Widest</th></tr>
+      </thead>
+      <tbody id="report"></tbody>
+    </table>
+    <p class="field__note" style="margin-top:var(--s2)">Amber means a vertical
+      ceiling clipped the target, so that shape cannot reach what you asked for.</p>
+  </div>
+
+  <div class="group">
+    <h2>Result</h2>
+    <pre id="out"></pre>
+    <div class="row" style="margin-top:var(--s2)">
+      <button id="copy" type="button">Copy for fov.js</button>
+      <button id="reset" type="button">Reset to shipped</button>
+    </div>
+  </div>
+</aside>
+
+<div class="toast" id="toast"></div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.185.1/build/three.module.js",
+    "@photo-sphere-viewer/core": "https://cdn.jsdelivr.net/npm/@photo-sphere-viewer/core@5.15.1/index.module.js"
+  }
+}
+</script>
+
+<script type="module">
+import { Viewer } from '@photo-sphere-viewer/core';
+import { fovModel, DEFAULTS, SHAPES, hToV, vToH, clamp }
+  from '/tours/2719-fort-worth-street/fov.js';
+
+const TOUR = '/tours/2719-fort-worth-street/';
+const $ = (id) => document.getElementById(id);
+const fail = (msg) => { const e = $('err'); e.hidden = false; e.textContent = msg; };
+
+let tour;
+try {
+  const res = await fetch(TOUR + 'tour.json', { cache: 'no-cache' });
+  if (!res.ok) throw new Error(`tour.json -> HTTP ${res.status}`);
+  tour = await res.json();
+} catch (e) {
+  fail(`Could not load the tour: ${e.message}. Serve the site from the project root
+        (node serve.mjs) rather than opening this file directly.`);
+  throw e;
+}
+
+const scenes = tour.scenes;
+const SLIDERS = ['hStart', 'hIn', 'hOut', 'vCeilStart', 'vCeilOut'];
+
+let cfg = { ...DEFAULTS };
+let model = fovModel(cfg);
+
+/* ---------------------------------------------------------------- stage */
+const frame = $('frame');
+const stage = $('stage');
+const aspect = () => Math.max(stage.clientWidth, 1) / Math.max(stage.clientHeight, 1);
+
+// Fit a requested pixel shape inside the arena without distorting its ratio --
+// tuning against a squashed stage would report a viewport nobody actually has.
+let shape = SHAPES[1];
+function applyShape(s) {
+  shape = s;
+  const pad = 48;
+  const arena = frame.parentElement;
+  const maxW = arena.clientWidth - pad;
+  const maxH = arena.clientHeight - pad - 26;   // 26px for the caption below
+  const k = Math.min(maxW / s.w, maxH / s.h, 1);
+  frame.style.width = `${Math.round(s.w * k)}px`;
+  frame.style.height = `${Math.round(s.h * k)}px`;
+  $('frameSize').textContent =
+    `${s.name} · ${s.w}×${s.h} · ratio ${(s.w / s.h).toFixed(2)}`;
+  for (const b of $('shapes').children) {
+    b.setAttribute('aria-pressed', String(b.dataset.name === s.name));
+  }
+}
+
+$('shapes').innerHTML = SHAPES.map(s =>
+  `<button type="button" data-name="${s.name}" aria-pressed="false">${s.name}</button>`).join('');
+$('shapes').addEventListener('click', (e) => {
+  const b = e.target.closest('button');
+  if (b) applyShape(SHAPES.find(s => s.name === b.dataset.name));
+});
+applyShape(shape);
+addEventListener('resize', () => applyShape(shape));
+
+/* ---------------------------------------------------------------- viewer */
+$('room').innerHTML = scenes.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+const startScene = scenes.find(s => s.id === tour.defaultScene) ?? scenes[0];
+$('room').value = startScene.id;
+
+let bounds = model.boundsFor(aspect());
+let lastAspect = aspect();
+
+const viewer = new Viewer({
+  container: stage,
+  panorama: TOUR + startScene.pano,
+  navbar: false,
+  loadingImg: null,
+  touchmoveTwoFingers: false,
+  mousewheelCtrlKey: false,
+  defaultYaw: 0,
+  ...bounds,
+  defaultZoomLvl: model.startZoom(aspect()),
+});
+viewer.addEventListener('panorama-error', (e) =>
+  fail(`Panorama failed to load: ${e.error?.message ?? e}`));
+
+$('room').addEventListener('change', (e) => {
+  const s = scenes.find(x => x.id === e.target.value);
+  if (s) viewer.setPanorama(TOUR + s.pano, { transition: false });
+});
+
+/** Horizontal FOV currently on screen. */
+const currentH = () => vToH(model.vFovOf(viewer.getZoomLevel(), bounds), aspect());
+
+/** Re-derive bounds for the live config + shape, holding `keepH` on screen. */
+function retarget(keepH) {
+  const a = aspect();
+  model = fovModel(cfg);
+  bounds = model.boundsFor(a);
+  lastAspect = a;
+  viewer.setOptions(bounds);
+  viewer.zoom(model.zoomFor(clamp(hToV(keepH, a), bounds.minFov, bounds.maxFov), bounds));
+  draw();
+}
+
+// Same correction the tour makes: a shape change must preserve how much room is
+// visible, not the vertical FOV that PSV would otherwise hold constant.
+viewer.addEventListener('size-updated', () => {
+  const a = aspect();
+  if (!isFinite(a) || a <= 0 || Math.abs(a - lastAspect) < 1e-3) return;
+  const seen = vToH(model.vFovOf(viewer.getZoomLevel(), bounds), lastAspect);
+  retarget(seen);
+});
+viewer.addEventListener('zoom-updated', () => drawHud());
+
+/* ---------------------------------------------------------------- controls */
+for (const key of SLIDERS) {
+  const el = $(key);
+  // A rail that cannot reach the incoming value clamps it silently: the readout
+  // still shows the real config, so the thumb sits somewhere else entirely and
+  // rewrites the number the moment it is touched. Widen the rail, never clip.
+  if (cfg[key] < Number(el.min)) el.min = String(Math.floor(cfg[key]));
+  if (cfg[key] > Number(el.max)) el.max = String(Math.ceil(cfg[key]));
+  el.value = cfg[key];
+  el.addEventListener('input', () => {
+    cfg = { ...cfg, [key]: Number(el.value) };
+    // Keep min<max meaningful: the closest zoom can never be wider than the widest.
+    if (cfg.hIn > cfg.hOut) {
+      if (key === 'hIn') cfg.hOut = cfg.hIn; else cfg.hIn = cfg.hOut;
+      $('hIn').value = cfg.hIn; $('hOut').value = cfg.hOut;
+    }
+    // Moving the opening target should show you the opening; moving a limit
+    // should leave the view where it is so you can feel the limit bite.
+    retarget(key === 'hStart' ? cfg.hStart : currentH());
+  });
+}
+
+$('goOpen').addEventListener('click', () => retarget(cfg.hStart));
+$('goIn').addEventListener('click', () => viewer.zoom(100));
+$('goOut').addEventListener('click', () => viewer.zoom(0));
+
+$('reset').addEventListener('click', () => {
+  cfg = { ...DEFAULTS };
+  for (const key of SLIDERS) $(key).value = cfg[key];
+  retarget(cfg.hStart);
+  toast('Reset to the shipped values');
+});
+
+$('copy').addEventListener('click', async () => {
+  try {
+    await navigator.clipboard.writeText($('out').textContent);
+    toast('Copied — paste over DEFAULTS in fov.js');
+  } catch {
+    toast('Copy blocked; select the text instead');
+  }
+});
+
+let toastTimer;
+function toast(msg) {
+  const t = $('toast');
+  t.textContent = msg; t.dataset.on = 'true';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.dataset.on = 'false'; }, 2200);
+}
+
+/* ---------------------------------------------------------------- render */
+function drawHud() {
+  const a = aspect();
+  $('hudH').textContent = currentH().toFixed(0);
+  $('hudV').textContent = model.vFovOf(viewer.getZoomLevel(), bounds).toFixed(0);
+  void a;
+}
+
+function draw() {
+  for (const key of SLIDERS) $(`${key}Val`).textContent = `${cfg[key]}°`;
+
+  // Report each shape from the model itself rather than re-deriving here, so the
+  // table can never disagree with what the viewer above is doing.
+  $('report').innerHTML = SHAPES.map(s => {
+    const r = model.report(s.w / s.h);
+    const openClipped = r.open < cfg.hStart - 0.5;
+    const outClipped = r.widest < cfg.hOut - 0.5;
+    return `<tr>
+      <td>${s.name}</td>
+      <td class="${openClipped ? 'warn' : ''}">${r.open.toFixed(0)}°</td>
+      <td>${r.closest.toFixed(0)}°</td>
+      <td class="${outClipped ? 'warn' : ''}">${r.widest.toFixed(0)}°</td>
+    </tr>`;
+  }).join('');
+
+  $('out').textContent =
+`hStart: ${cfg.hStart},
+hIn: ${cfg.hIn},
+hOut: ${cfg.hOut},
+vCeilStart: ${cfg.vCeilStart},
+vCeilOut: ${cfg.vCeilOut},`;
+
+  drawHud();
+}
+
+viewer.addEventListener('ready', () => { retarget(cfg.hStart); }, { once: true });
+draw();
+</script>
+</body>
+</html>
