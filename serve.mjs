@@ -4,13 +4,15 @@
 //
 //   node serve.mjs            # port 3000
 //   node serve.mjs 4000       # explicit port
+//   PORT=4000 node serve.mjs  # explicit port, for tooling that assigns one
+//                             # (a worktree cannot have 3000 too)
 import { createServer } from 'node:http';
 import { createReadStream } from 'node:fs';
 import { stat } from 'node:fs/promises';
 import { extname, join, normalize, sep } from 'node:path';
 
 const ROOT = import.meta.dirname;
-const PORT = Number(process.argv[2]) || 3000;
+const PORT = Number(process.argv[2]) || Number(process.env.PORT) || 3000;
 
 const TYPES = {
   '.html': 'text/html; charset=utf-8',
