@@ -188,20 +188,20 @@
 
   /* --------------------------------------------------------- link marker */
   .hot{
-    width:52px; height:52px; display:grid; place-items:center; cursor:pointer;
+    width:36px; height:36px; display:grid; place-items:center; cursor:pointer;
     border-radius:50%;
     background:radial-gradient(circle at 50% 38%, rgba(250,248,245,.30), rgba(176,137,104,.30) 62%, transparent 72%);
     box-shadow:0 0 0 1.5px rgba(250,248,245,.80) inset, 0 3px 14px rgba(0,0,0,.5);
     transition:transform .34s var(--ease-spring), box-shadow .34s var(--ease-out);
   }
   .hot::before{
-    content:""; position:absolute; inset:-9px; border-radius:50%;
+    content:""; position:absolute; inset:-6px; border-radius:50%;
     border:1.5px solid rgba(250,248,245,.42);
     animation:pulse 3s var(--ease-out) infinite;
   }
   .hot span{
-    width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;
-    border-bottom:11px solid rgba(250,248,245,.96); transform:translateY(-1px);
+    width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;
+    border-bottom:8px solid rgba(250,248,245,.96); transform:translateY(-1px);
     filter:drop-shadow(0 1px 3px rgba(0,0,0,.65));
   }
   .hot--est{box-shadow:0 0 0 1.5px var(--lf-sand-light) inset, 0 3px 14px rgba(0,0,0,.5);}
@@ -397,6 +397,12 @@ const nodes = scenes.map(s => ({
   })),
 }));
 
+// On a phone a drag rotates by roughly the field of view, so at the default
+// speed crossing a 375px screen only turns you ~90deg and you end up swiping
+// three or four times to look behind you. Touch gets a faster ratio; a mouse
+// drag is already fine and is left alone.
+const coarsePointer = matchMedia('(pointer: coarse)').matches;
+
 const viewer = new Viewer({
   container: document.getElementById('stage'),
   defaultYaw: 0,
@@ -404,6 +410,10 @@ const viewer = new Viewer({
   loadingImg: null,
   touchmoveTwoFingers: false,
   mousewheelCtrlKey: false,
+  // 90 is the PSV default; a little wider lets people take in a whole room
+  // without pushing the equirect distortion far enough to look fisheyed.
+  maxFov: 100,
+  moveSpeed: coarsePointer ? 1.9 : 1.0,
   plugins: [
     MarkersPlugin,
     [VirtualTourPlugin, {
@@ -420,7 +430,7 @@ const viewer = new Viewer({
           b.innerHTML = '<span></span>';
           return b;
         },
-        size: { width: 52, height: 52 },
+        size: { width: 36, height: 36 },
       },
     }],
   ],

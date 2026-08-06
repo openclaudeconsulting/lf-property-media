@@ -166,18 +166,46 @@ vertical line straight down the panorama once CloudPano wraps it onto a sphere.
 Every spatial filter here pads horizontally by wrapping the image around itself
 first. The seam is measured in the test suite, not assumed.
 
-**Fusion engine.** `--engine luminosity` (default) blends the frames through
-smoothed luminosity masks — the same thing a retoucher does by hand with
-luminosity masks in Photoshop. `--engine mertens` uses OpenCV's Mertens
-exposure fusion instead.
+**Fusion engine.** `--engine mertens` (default) uses OpenCV's Mertens exposure
+fusion. `--engine luminosity` blends through smoothed luminosity masks instead —
+the same thing a retoucher does by hand in Photoshop — and is the low-memory
+fallback.
 
-Measured on the test scene, the two are equivalent on retained detail
-(0.0089 vs 0.0092), but Mertens crushes deep shadows — it rendered a dark
-corner at 0.017 where the frames actually held detail at 0.087 — and its
-Laplacian pyramid lays a seam down the wrap edge, which is why it gets 25%
-wrap padding before it runs. The luminosity engine also holds peak memory
-roughly flat instead of needing the whole stack plus its pyramids at once,
-which matters at 72 MP. Hence the default.
+Luminosity was the original default and it halos. Blurring a weight map smears
+the boundary between two regions that want opposite exposures, so a dark object
+on a bright wall gets lifted toward mid-tone *and* leaves a glow on the wall
+around it. Measured on the guitar room at 2719 Fort Worth, where a black TV
+hangs on a pale blue wall:
+
+| | TV screen | wall beside TV vs. wall further off |
+|---|---|---|
+| source frame (ground truth) | 0.019 | −0.016 (wall is *darker* by the TV) |
+| luminosity | 0.182 | **+0.016** (glow — sign is inverted) |
+| luminosity, 8× wider blur | 0.157 | +0.022 (wider blur does not fix the sign) |
+| **mertens** | **0.068** | **−0.037** (correct direction) |
+
+Luminosity lifted the screen to 0.182 — the exact luminance the *wall* had in
+the source — which is why it read as grey plastic rather than a black TV. No
+blur radius fixes it, because the artefact is the blur.
+
+Two consequences of the switch, both handled:
+
+- Mertens' Laplacian pyramid lays a seam down the wrap edge, so it gets 25% wrap
+  padding before it runs. The seam is measured in the test suite, not assumed.
+- Holding darks down means the shadow lift in the grade is now stretching real
+  sensor noise that the washed-out blend used to bury (high-frequency energy in
+  the TV went 0.0095 → 0.0322). `--denoise` handles it; see below.
+
+Mertens needs the whole stack plus its pyramids in memory at once. `build`
+prints the estimated peak before it starts; drop to `--engine luminosity` if a
+machine cannot hold it.
+
+**Shadow denoise.** `--denoise 0.9` (default, `0` disables) runs a guided filter
+over the fused frame, mixed in proportional to how dark each pixel is and doing
+nothing at all above ~0.22 luminance. Because it is edge-aware it cleans a flat
+black screen without softening the edge of it. Wall texture, fabric and timber
+grain measure bit-identical before and after; the TV came back to 0.013, in line
+with the 0.0095 the old blend produced.
 
 ---
 
@@ -206,7 +234,8 @@ label <output_dir> --map FILE.json   rename to room names
   --bracket N        frames per position (default 5)
   --gap SECONDS      separation that starts a new position (default 6)
   --preset NAME      natural | bright | flat
-  --engine NAME      luminosity | mertens
+  --engine NAME      mertens (default) | luminosity
+  --denoise N        shadow-only denoise strength, 0 disables (default 0.9)
   --align            align frames first — handheld captures only; brackets
                      shot on a tripod are already pixel-aligned
   --allow-partial    also process groups without a full bracket set

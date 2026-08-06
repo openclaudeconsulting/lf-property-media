@@ -19,6 +19,7 @@ import tempfile
 from datetime import datetime, timedelta
 from pathlib import Path
 
+import cv2
 import numpy as np
 from PIL import Image
 
@@ -232,11 +233,17 @@ def main() -> int:
               f"{float(lum_fuse.mean()):.4f} vs {float(mer_fuse.mean()):.4f}")
         check("mertens wrap padding clears its seam",
               seam_ratio(mer_fuse) < 2.5, f"ratio {seam_ratio(mer_fuse):.2f}")
-        check("luminosity engine holds shadow detail better than mertens",
+        # Not a quality ranking -- it pins the direction of the difference.
+        # luminosity pushes dark regions harder toward mid-tone, which is what
+        # makes a black TV or a fan blade read as grey; mertens holds them down.
+        check("luminosity lifts dark regions harder than mertens",
               float(P.luminance(lum_fuse)[dark].mean())
               > float(P.luminance(mer_fuse)[dark].mean()),
               f"{float(P.luminance(lum_fuse)[dark].mean()):.4f} vs "
               f"{float(P.luminance(mer_fuse)[dark].mean()):.4f}")
+        check("the default build engine is mertens",
+              P.build_parser().parse_args(
+                  ["build", "in", "out"]).engine == "mertens")
 
         print("\n--- presets ---")
         means = {}
@@ -323,6 +330,51 @@ def main() -> int:
         dark[150:480] = 0.28
         check("a dark room with a black nadir is NOT called dual-fisheye",
               not P.looks_like_dual_fisheye(dark))
+
+        print("\n--- shadow denoise ---")
+        rng = np.random.default_rng(7)
+        flat_dark = np.full((240, 480, 3), 0.05, np.float32)
+        flat_dark += rng.normal(0, 0.02, flat_dark.shape).astype(np.float32)
+        midtone = np.full((240, 480, 3), 0.55, np.float32)
+        midtone += rng.normal(0, 0.02, midtone.shape).astype(np.float32)
+
+        def hf(a):
+            g = P.luminance(a)
+            return float((g - cv2.GaussianBlur(g, (0, 0), 2.0)).std())
+
+        # The mix ramps in quadratically as the tone falls, so a near-black
+        # screen (~0.03, where the guitar-room TV lands) is cleaned harder than
+        # the edge of the shadow range.
+        blackish = np.full((240, 480, 3), 0.03, np.float32)
+        blackish += rng.normal(0, 0.02, blackish.shape).astype(np.float32)
+        cleaned_black = P.denoise_shadows(blackish, 0.9, False)
+        cleaned_dark = P.denoise_shadows(flat_dark, 0.9, False)
+        cleaned_mid = P.denoise_shadows(midtone, 0.9, False)
+        keep_black = hf(cleaned_black) / hf(blackish)
+        keep_dark = hf(cleaned_dark) / hf(flat_dark)
+        check("noise is reduced across the shadow range",
+              keep_black < 0.8 and keep_dark < 0.8,
+              f"near-black keeps {keep_black:.2f}, dark keeps {keep_dark:.2f}")
+        check("the darker the tone, the harder it is cleaned",
+              keep_black < keep_dark,
+              f"{keep_black:.3f} < {keep_dark:.3f}")
+        check("mid-tones are left alone entirely",
+              np.allclose(cleaned_mid, midtone),
+              f"{hf(midtone):.5f} -> {hf(cleaned_mid):.5f}")
+        check("strength 0 is a no-op",
+              P.denoise_shadows(flat_dark, 0.0, False) is flat_dark)
+        # A hard edge inside the shadows must survive -- this is a guided
+        # filter, not a blur, so an object boundary keeps its step.
+        step = np.zeros((200, 200, 3), np.float32)
+        step[:, 100:] = 0.18
+        edged = P.denoise_shadows(step, 0.9, False)
+        check("an edge in shadow is preserved, not blurred",
+              abs(float(edged[100, 150].mean() - edged[100, 50].mean()) - 0.18) < 0.02,
+              f"step {float(edged[100,150].mean()-edged[100,50].mean()):.4f}")
+        wide = np.tile(flat_dark, (1, 2, 1))
+        check("wrapped denoise keeps the seam continuous",
+              abs(float(P.denoise_shadows(wide, 0.9, True)[:, 0].mean()
+                        - P.denoise_shadows(wide, 0.9, True)[:, -1].mean())) < 0.01)
 
         print("\n--- Studio DNG exports ---")
         check(".dng is an accepted input extension", ".dng" in P.READABLE_EXT)

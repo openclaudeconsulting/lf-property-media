@@ -57,7 +57,11 @@ class Grade:
     warmth: float = 0.0     # positive nudges toward warm after neutralising
     ev: float = 0.12        # exposure, in stops
     highlights: float = 0.08
-    shadows: float = 0.10
+    # Shadow lift lives here rather than in the fuse. Mertens deliberately holds
+    # dark objects dark, so the opening-up of genuine shadow happens afterwards
+    # as one global curve -- which, being monotonic, cannot make a black TV
+    # brighter than the wall behind it the way a per-region blend can.
+    shadows: float = 0.28
     contrast: float = 0.05  # gentle S-curve, never clips
     vibrance: float = 0.06  # saturation boost, weighted toward flat colours
     clarity: float = 0.08   # wide-radius local contrast
@@ -70,7 +74,7 @@ PRESETS = {
     # the exposure" -- a clean lift, nothing stylised.
     "natural": Grade(),
     # A touch brighter and airier, for dim interiors or north-facing rooms.
-    "bright": Grade(ev=0.28, highlights=0.14, shadows=0.18, contrast=0.07,
+    "bright": Grade(ev=0.28, highlights=0.14, shadows=0.38, contrast=0.07,
                     vibrance=0.10, clarity=0.10),
     # Fuse only. No colour or tone changes at all -- use when the panorama is
     # going into Lightroom afterwards.
@@ -372,9 +376,18 @@ def fuse_luminosity(stack: list[np.ndarray], wrap: bool) -> np.ndarray:
 
     Per-frame quality weights are computed on a downscaled copy, blurred, then
     scaled back up and used to blend the full-resolution frames a slice at a
-    time. Because the weight maps are heavily smoothed this is free of the
-    halos a per-pixel blend would produce, and it is the same technique used
-    for hand-blended real-estate interiors.
+    time. Only one full-resolution weight map is alive at a time, which is why
+    this exists: it fuses a 9-frame 6080x3040 bracket in a fraction of the
+    memory Mertens needs.
+
+    It does, however, halo. Blurring the weight map smears the boundary between
+    two regions that want opposite exposures, so a dark object on a bright wall
+    (a black TV, a fan blade against a ceiling) both gets lifted toward mid-tone
+    and leaves a bright glow on the wall around it. Measured on the 2719 Fort
+    Worth guitar room: the wall immediately beside the TV came out *brighter*
+    than the wall further away, when in the source frames it is darker. Widening
+    the blur reduces it but never fixes the sign. Prefer `mertens` unless memory
+    forces this path.
     """
     h, w = stack[0].shape[:2]
     small_w = min(w, 1600)
@@ -407,6 +420,46 @@ def fuse_luminosity(stack: list[np.ndarray], wrap: bool) -> np.ndarray:
             out[:, :, c] += im[:, :, c] * full
         del full
     return np.clip(out, 0.0, 1.0)
+
+
+def denoise_shadows(img: np.ndarray, strength: float, wrap: bool,
+                    knee: float = 0.22, radius: int = 13,
+                    eps: float = 5e-4) -> np.ndarray:
+    """Edge-preserving clean-up of the darkest tones only.
+
+    Holding dark objects dark (see fuse_mertens) means the shadow lift in the
+    grade is now stretching real sensor noise that a washed-out blend used to
+    bury. Measured on the guitar-room TV: high-frequency energy in the screen
+    went from 0.0095 under the old blend to 0.0322 under the new one.
+
+    This is a guided filter using the image as its own guide, so it smooths
+    flat areas but stops at edges, mixed in proportional to how dark the pixel
+    is. Above `knee` nothing is touched at all -- wall texture, fabric and
+    timber grain measured bit-identical before and after.
+    """
+    if strength <= 0:
+        return img
+    r = max(int(radius), 1) | 1
+    pad = r * 2 if wrap else 0
+    work = (np.concatenate([img[:, -pad:], img, img[:, :pad]], axis=1)
+            if pad else img)
+
+    k = (r, r)
+    smooth = np.empty_like(work)
+    for c in range(3):
+        p = work[:, :, c]
+        mean = cv2.boxFilter(p, cv2.CV_32F, k)
+        var = cv2.boxFilter(p * p, cv2.CV_32F, k) - mean * mean
+        a = var / (var + eps)
+        b = mean - a * mean
+        smooth[:, :, c] = (cv2.boxFilter(a, cv2.CV_32F, k) * p
+                           + cv2.boxFilter(b, cv2.CV_32F, k))
+
+    lum = luminance(work)
+    mix = (np.clip(1.0 - lum / max(knee, EPS), 0.0, 1.0) ** 2)[..., None]
+    mix *= float(np.clip(strength, 0.0, 1.0))
+    out = work * (1.0 - mix) + smooth * mix
+    return np.ascontiguousarray(out[:, pad:pad + img.shape[1]] if pad else out)
 
 
 def align_stack(stack: list[np.ndarray]) -> list[np.ndarray]:
@@ -768,6 +821,10 @@ def cmd_build(args) -> int:
                      else fuse_luminosity(stack, wrap))
             del stack
 
+            if args.denoise > 0 and not fisheye:
+                print(f"    denoise shadows ({args.denoise:.2f})")
+                fused = denoise_shadows(fused, args.denoise, wrap)
+
             print(f"    grade ({args.preset})")
             fused = apply_grade(fused, grade, wrap)
             if args.nadir and not fisheye:
@@ -903,10 +960,13 @@ def build_parser() -> argparse.ArgumentParser:
     p_build.add_argument("output_dir")
     add_grouping(p_build)
     p_build.add_argument("--preset", choices=sorted(PRESETS), default="natural")
+    p_build.add_argument("--denoise", type=float, default=0.9,
+                         help="strength of the shadow-only denoise, 0 disables")
     p_build.add_argument("--engine", choices=("luminosity", "mertens"),
-                         default="luminosity",
-                         help="exposure-fusion method; luminosity holds shadow "
-                              "detail better and uses far less memory")
+                         default="mertens",
+                         help="exposure-fusion method; mertens keeps dark "
+                              "objects dark and does not halo, luminosity "
+                              "lifts shadows harder and uses far less memory")
     p_build.add_argument("--align", action="store_true",
                          help="align frames first (handheld captures only)")
     p_build.add_argument("--fisheye", action="store_true",
