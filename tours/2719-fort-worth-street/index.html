@@ -421,6 +421,12 @@ const viewer = new Viewer({
       renderMode: '2d',
       nodes,
       startNodeId: tour.defaultScene,
+      // Off. PSV pops a thumbnail card on hotspot hover, and because it only
+      // tears that card down on mouseleave, clicking a doorway -- which pulls
+      // the arrow out from under the cursor -- strands one on screen for good.
+      // The room name is already in the caption, so the card was never earning
+      // its keep against cluttering the panorama.
+      showLinkTooltip: false,
       // The factory receives the link, so an unverified position can carry its
       // own sand ring rather than being chased through the DOM afterwards.
       arrowStyle: {
@@ -442,25 +448,6 @@ const markers = viewer.getPlugin(MarkersPlugin);
 viewer.addEventListener('ready', () => { boot.hidden = true; }, { once: true });
 viewer.addEventListener('panorama-error', (e) => fail(`Panorama failed to load: ${e.error?.message ?? e}`));
 
-/* PSV builds a link tooltip on arrow mouseenter and only tears it down on
-   mouseleave. Clicking a doorway pulls that arrow out from under the cursor, so
-   mouseleave never fires and the tooltip is stranded on screen -- one more with
-   every hop, which is why they pile up until the room is covered in them.
-   Dispatching the event the plugin is waiting for runs its own cleanup. Do NOT
-   just remove the node: Tooltip.destroy() calls parent.removeChild and throws
-   if the element has already gone. mouseleave does not bubble, but PSV listens
-   on the container in the capture phase, so dispatching on the arrow reaches
-   it. */
-function releaseArrowTooltips() {
-  for (const el of document.querySelectorAll('.psv-virtual-tour-link')) {
-    el.dispatchEvent(new MouseEvent('mouseleave', { bubbles: false }));
-  }
-}
-
-// Capture, so it runs before the plugin's own click handler swaps the scene.
-document.getElementById('stage')
-  .addEventListener('click', releaseArrowTooltips, true);
-
 let currentId = tour.defaultScene;
 vt.addEventListener('node-changed', ({ node }) => {
   currentId = node.id;
@@ -478,7 +465,7 @@ vt.addEventListener('node-changed', ({ node }) => {
 
 rail.addEventListener('click', (e) => {
   const chip = e.target.closest('.chip');
-  if (chip) { releaseArrowTooltips(); vt.setCurrentNode(chip.dataset.id); }
+  if (chip) vt.setCurrentNode(chip.dataset.id);
 });
 
 /* ---------------------------------------------------------------- author */
@@ -505,7 +492,6 @@ function stats() {
     `${all.filter(l => l.estimated === false).length} / ${all.length}`;
 }
 function rebuild(id) {
-  releaseArrowTooltips();   // setNodes replaces every arrow, same stranding
   vt.setNodes(scenes.map(x => ({
     id: x.id, panorama: x.pano, thumbnail: x.thumb, name: x.name,
     links: x.links.map(l => ({
@@ -580,8 +566,6 @@ document.getElementById('btnFull').addEventListener('click', () => viewer.toggle
 addEventListener('keydown', (e) => {
   if (e.target.matches('select,input')) return;
   const i = scenes.findIndex(s => s.id === currentId);
-  // The cursor can be resting on an arrow while the keyboard drives the tour.
-  if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') releaseArrowTooltips();
   if (e.key === 'ArrowRight') vt.setCurrentNode(scenes[(i + 1) % scenes.length].id);
   if (e.key === 'ArrowLeft') vt.setCurrentNode(scenes[(i - 1 + scenes.length) % scenes.length].id);
   if (e.key === 'f') viewer.toggleFullscreen();
