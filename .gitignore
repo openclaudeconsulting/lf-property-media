@@ -67,3 +67,6 @@ hcrgI.jpg
 # committed -- Cloudflare Pages deploys what is in the repo. These are the
 # web-sized renders (4096x2048, ~1MB each), not the masters; the full-resolution
 # originals stay in Filing System/ and remain ignored.
+
+# Wrangler local state: local D1 databases, caches, build output.
+.wrangler/

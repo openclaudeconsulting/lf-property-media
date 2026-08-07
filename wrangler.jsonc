@@ -7,5 +7,20 @@
     "directory": ".",
     "not_found_handling": "404-page",
     "html_handling": "auto-trailing-slash"
-  }
+  },
+
+  // Local development only.
+  //
+  // The live site deploys through the Cloudflare Pages *git* integration, which
+  // does not read this file -- production bindings are set on the project in the
+  // dashboard. This block is what `wrangler pages dev` and `wrangler d1 execute
+  // --local` use, so the schema can be built and tested without touching the
+  // account. `database_id` is a placeholder until the real database exists.
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "lf-tours",
+      "database_id": "local-development-placeholder"
+    }
+  ]
 }
