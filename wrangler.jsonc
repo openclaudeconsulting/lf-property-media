@@ -9,18 +9,22 @@
     "html_handling": "auto-trailing-slash"
   },
 
-  // Local development only.
-  //
-  // The live site deploys through the Cloudflare Pages *git* integration, which
-  // does not read this file -- production bindings are set on the project in the
-  // dashboard. This block is what `wrangler pages dev` and `wrangler d1 execute
-  // --local` use, so the schema can be built and tested without touching the
-  // account. `database_id` is a placeholder until the real database exists.
+  // NOTE: the live site deploys through the Cloudflare Pages *git* integration,
+  // which does not read this file. Production bindings must be added to the
+  // Pages project in the dashboard -- binding name DB, database lf-tours. This
+  // block is what `wrangler d1 execute` and local dev use.
   "d1_databases": [
     {
       "binding": "DB",
       "database_name": "lf-tours",
-      "database_id": "local-development-placeholder"
+      "database_id": "5c2d1f69-2cac-470f-bb4c-e455ad71a918"
     }
   ]
+
+  // R2 binding goes here once R2 is enabled on the account. `wrangler r2 bucket
+  // create lf-tour-media` currently fails with code 10042, "Please enable R2
+  // through the Cloudflare Dashboard" -- it has to be switched on by hand first.
+  // Panoramas stay in git until then, which does not scale past a few properties.
+  //
+  // "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "lf-tour-media" }]
 }
