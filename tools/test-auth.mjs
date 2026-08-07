@@ -201,5 +201,50 @@ P('the same invite cannot be redeemed twice',
 P('a second attempt did not change the password',
   (await call(login, { email: 'invitee@example.com', password: 'another-long-password' })).status === 401);
 
+/* --------------------------------------------------- tenant isolation ---- */
+
+const { onRequestGet: tours } = await import('../functions/api/tours.js');
+
+// Two tenants with a listing each. t1 is the agent's; t3 belongs to someone else.
+for (const [tid, pid, toid, addr] of [
+  ['t1', 'p1', 'to1', '2719 Fort Worth Street'],
+  ['t3', 'p2', 'to2', 'Someone Elses House'],
+]) {
+  sql.prepare(`INSERT INTO properties (id,tenant_id,address,created_at) VALUES (?,?,?,?)`)
+    .run(pid, tid, addr, now);
+  sql.prepare(`INSERT INTO tours (id,tenant_id,property_id,slug,status,created_at) VALUES (?,?,?,?,'published',?)`)
+    .run(toid, tid, pid, toid, now);
+}
+
+const asUser = (u, url = 'https://x/api/tours') =>
+  tours({ request: new Request(url, { headers: { cookie: u } }), env: { DB: shim }, data: {} });
+
+P('tours requires a session', (await asUser('')).status === 401);
+
+// Sign the agent (tenant t1) back in for the scoping checks.
+const agentCookie = ck(await call(login, { email: 'agent@example.com', password: 'hunter2' }));
+r = await asUser(agentCookie);
+let payload = await r.json();
+P('tours returns 200 for a signed-in agent', r.status === 200);
+P('agent sees only their own tenant',
+  payload.tours.length === 1 && payload.tours[0].address === '2719 Fort Worth Street');
+P('tour row carries its scene count', 'scenes' in payload.tours[0]);
+
+// The leak that matters: asking for a tenant you do not belong to.
+r = await asUser(agentCookie, 'https://x/api/tours?tenant=t3');
+P('agent asking for another tenant -> 403, not a silent fallback', r.status === 403);
+
+// LF staff cross tenants on purpose; that is what makes support possible.
+sql.exec(`UPDATE users SET role='owner' WHERE id='u1'`);
+const ownerCookie = ck(await call(login, { email: 'agent@example.com', password: 'hunter2' }));
+r = await asUser(ownerCookie, 'https://x/api/tours?tenant=t3');
+payload = await r.json();
+P('owner may inspect another tenant',
+  r.status === 200 && payload.tours.length === 1 && payload.tours[0].address === 'Someone Elses House');
+r = await asUser(ownerCookie);
+payload = await r.json();
+P('owner without ?tenant still defaults to their own',
+  payload.tours.length === 1 && payload.tours[0].address === '2719 Fort Worth Street');
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
