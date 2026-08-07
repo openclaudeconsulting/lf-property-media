@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex, nofollow" />
+<!-- The URL carries a single-use token. Referrer would leak it to any host a
+     linked page points at, so it never leaves this document. -->
+<meta name="referrer" content="no-referrer" />
+<title>Choose a password — LF Property Media</title>
+
+<link rel="icon" href="/images/favicon.svg" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+
+<style>
+  :root{
+    --lf-paper:#faf8f5; --lf-ink:#1a1a1a; --lf-muted:#6b6b6b;
+    --lf-sand:#b08968; --lf-sand-dark:#8c6a4e; --lf-sand-light:#d4b896;
+    --lf-border:#e8e2d5; --ok:#4a7c3f;
+    --font-display:"Playfair Display",Georgia,serif;
+    --font-body:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+    --lift-2:0 2px 4px rgba(38,26,16,.18), 0 8px 24px rgba(38,26,16,.16), 0 16px 48px rgba(38,26,16,.10);
+    --ease-out:cubic-bezier(.22,.68,.36,1);
+    --ease-spring:cubic-bezier(.34,1.42,.48,1);
+  }
+  *,*::before,*::after{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0; font-family:var(--font-body); color:var(--lf-ink);
+    -webkit-font-smoothing:antialiased; display:grid; place-items:center; padding:1.5rem;
+    background:
+      radial-gradient(900px 520px at 18% 8%, rgba(176,137,104,.16), transparent 60%),
+      radial-gradient(700px 480px at 88% 92%, rgba(212,184,150,.20), transparent 62%),
+      var(--lf-paper);
+  }
+  .card{
+    width:100%; max-width:412px; background:#fff; border:1px solid var(--lf-border);
+    border-radius:4px; box-shadow:var(--lift-2); padding:2.25rem 2rem 2rem;
+  }
+  .mark{font-family:var(--font-display); font-size:1.75rem; line-height:1;
+        letter-spacing:-.02em; text-decoration:none; color:var(--lf-ink);}
+  .mark i{color:var(--lf-sand); font-style:italic;}
+  h1{font-family:var(--font-display); font-weight:400; font-size:1.5rem;
+     letter-spacing:-.02em; margin:1.5rem 0 .375rem;}
+  .sub{margin:0 0 1.75rem; font-size:.8125rem; line-height:1.6; color:var(--lf-muted);}
+  label{display:block; font-size:.6875rem; letter-spacing:.12em; text-transform:uppercase;
+        color:var(--lf-muted); margin-bottom:.4rem; font-weight:600;}
+  input{
+    width:100%; font:inherit; font-size:.9375rem; padding:.6875rem .75rem;
+    border:1px solid var(--lf-border); border-radius:3px; background:var(--lf-paper);
+    color:var(--lf-ink); margin-bottom:.5rem;
+    transition:border-color .18s var(--ease-out), box-shadow .18s var(--ease-out);
+  }
+  input:hover{border-color:var(--lf-sand-light);}
+  input:focus{outline:none; border-color:var(--lf-sand); background:#fff;
+              box-shadow:0 0 0 3px rgba(176,137,104,.16);}
+  .hint{font-size:.71875rem; color:var(--lf-muted); margin:0 0 1.125rem; min-height:1.2em;}
+  .hint[data-ok="true"]{color:var(--ok);}
+  button{
+    width:100%; font:inherit; font-size:.75rem; font-weight:600; letter-spacing:.14em;
+    text-transform:uppercase; padding:.8125rem; cursor:pointer; color:var(--lf-paper);
+    background:var(--lf-ink); border:1px solid var(--lf-ink); border-radius:3px;
+    transition:background-color .2s var(--ease-out), transform .2s var(--ease-spring);
+  }
+  button:hover:not([disabled]){background:var(--lf-sand-dark); border-color:var(--lf-sand-dark);}
+  button:focus-visible{outline:2px solid var(--lf-sand); outline-offset:2px;}
+  button:active:not([disabled]){transform:translateY(1px) scale(.99);}
+  button[disabled]{opacity:.5; cursor:default;}
+  .err{margin:0 0 1.125rem; padding:.6875rem .75rem; border-radius:3px; font-size:.8125rem;
+       line-height:1.5; background:#fdf0ec; border:1px solid #e3b4a6; color:#8a3520;}
+  .err[hidden]{display:none;}
+  .foot{margin:1.5rem 0 0; font-size:.75rem; line-height:1.6; color:var(--lf-muted); text-align:center;}
+  .foot a{color:var(--lf-sand-dark);}
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+</style>
+</head>
+<body>
+
+<main class="card">
+  <a class="mark" href="/">LF<i>.</i></a>
+  <h1>Choose a password</h1>
+  <p class="sub">This link works once. Pick something long — length matters far
+     more than punctuation.</p>
+
+  <p class="err" id="err" hidden role="alert"></p>
+
+  <form id="form" novalidate>
+    <label for="password">New password</label>
+    <input type="password" id="password" name="password"
+           autocomplete="new-password" required autofocus minlength="12" />
+    <p class="hint" id="hint">At least 12 characters.</p>
+
+    <label for="confirm">Confirm password</label>
+    <input type="password" id="confirm" name="confirm"
+           autocomplete="new-password" required />
+    <p class="hint" id="hint2"></p>
+
+    <button type="submit" id="submit">Set password and sign in</button>
+  </form>
+
+  <p class="foot">Link expired? <a href="/contact.html">Ask for a new one</a>.</p>
+</main>
+
+<script type="module">
+const MIN = 12;
+const $ = (id) => document.getElementById(id);
+const err = $('err'), pw = $('password'), cf = $('confirm'), submit = $('submit');
+
+// Read the token, then strip it from the address bar. It stays in memory for the
+// POST but stops riding along in history, bookmarks or a screen-share.
+const token = new URLSearchParams(location.search).get('token') || '';
+if (token) history.replaceState({}, '', location.pathname);
+
+const fail = (m) => { err.hidden = false; err.textContent = m; };
+if (!token) {
+  fail('This link is missing its token. Use the full link exactly as it was sent to you.');
+  submit.disabled = true;
+}
+
+function check() {
+  const okLen = pw.value.length >= MIN;
+  $('hint').textContent = okLen
+    ? 'Long enough.'
+    : `At least ${MIN} characters — ${MIN - pw.value.length} to go.`;
+  $('hint').dataset.ok = String(okLen);
+
+  const match = cf.value.length > 0 && cf.value === pw.value;
+  $('hint2').textContent = cf.value.length === 0 ? '' : match ? 'Passwords match.' : 'Passwords do not match.';
+  $('hint2').dataset.ok = String(match);
+  return okLen && match;
+}
+pw.addEventListener('input', check);
+cf.addEventListener('input', check);
+
+$('form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  err.hidden = true;
+  if (!check()) return fail(`Password must be at least ${MIN} characters and both fields must match.`);
+
+  submit.disabled = true;
+  submit.textContent = 'Setting…';
+  try {
+    const res = await fetch('/api/auth/setup', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ token, password: pw.value }),
+    });
+    if (res.ok) { location.assign('/app/'); return; }
+    const data = await res.json().catch(() => ({}));
+    fail(data.error === 'weak_password'
+      ? `Password must be at least ${data.min ?? MIN} characters.`
+      : data.error === 'invalid_or_expired'
+        ? 'This link has expired or has already been used. Ask for a new one.'
+        : 'Something went wrong. Try again in a moment.');
+  } catch {
+    fail('Could not reach the server. Check your connection and try again.');
+  } finally {
+    submit.disabled = false;
+    submit.textContent = 'Set password and sign in';
+  }
+});
+check();
+</script>
+</body>
+</html>

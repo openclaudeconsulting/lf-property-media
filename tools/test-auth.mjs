@@ -25,7 +25,7 @@ import { hashPassword, verifyPassword, MAX_ITERATIONS } from '../functions/_lib/
 const sql = new DatabaseSync(':memory:');
 sql.exec(readFileSync(new URL('../migrations/0001_init.sql', import.meta.url), 'utf8'));
 
-/** Minimal D1 surface: prepare().bind().first()/.run()/.all() */
+/** Minimal D1 surface: prepare().bind().first()/.run()/.all(), plus batch(). */
 const shim = {
   prepare(q) {
     let args = [];
@@ -34,11 +34,16 @@ const shim = {
       // D1 returns null for no match; node:sqlite throws on some malformed
       // reads, and a throw here would become a 500 that leaks intent.
       first() { try { return sql.prepare(q).get(...args) ?? null; } catch { return null; } },
-      run() { return sql.prepare(q).run(...args); },
+      // D1 reports affected rows under meta.changes, node:sqlite under changes.
+      // The compare-and-set that makes an invite single-use reads meta.changes,
+      // so the shape has to match or the test proves nothing.
+      run() { const r = sql.prepare(q).run(...args); return { meta: { changes: r.changes } }; },
       all() { return { results: sql.prepare(q).all(...args) }; },
+      _run() { return api.run(); },
     };
     return api;
   },
+  batch(statements) { return statements.map((s) => s._run()); },
 };
 
 const now = Math.floor(Date.now() / 1000);
@@ -143,6 +148,58 @@ let dummyOk = true;
 try { await verifyPassword('anything', DUMMY); } catch { dummyOk = false; }
 P('login dummy hash is usable at the platform ceiling', dummyOk);
 P('login dummy hash never matches a password', (await verifyPassword('anything', DUMMY)) === false);
+
+/* ------------------------------------------------- invite redemption ----- */
+
+const { onRequestPost: setup } = await import('../functions/api/auth/setup.js');
+const { sha256Hex, newToken } = await import('../functions/_lib/crypto.js');
+
+sql.exec(`INSERT INTO tenants VALUES ('t3','Invite Co','invite-co','active',${now})`);
+sql.prepare(`INSERT INTO users VALUES ('u4','t3','invitee@example.com','Invitee','agent','active',?,NULL)`).run(now);
+
+const mkInvite = async (id, { expires = now + 3600, used = null, user = 'u4' } = {}) => {
+  const tok = newToken();
+  sql.prepare(`INSERT INTO credentials VALUES (?,?,'magiclink',?,?,?,?)`)
+    .run(id, user, await sha256Hex(tok), expires, used, now);
+  return tok;
+};
+
+P('setup rejects a token that does not exist',
+  (await call(setup, { token: 'nope', password: 'a-long-enough-password' })).status === 400);
+
+let tok = await mkInvite('i-weak');
+r = await call(setup, { token: tok, password: 'short' });
+P('setup rejects a short password', r.status === 400 && (await r.json()).error === 'weak_password');
+P('a rejected attempt does not spend the invite',
+  sql.prepare(`SELECT used_at FROM credentials WHERE id='i-weak'`).get().used_at === null);
+
+tok = await mkInvite('i-expired', { expires: now - 1 });
+P('setup rejects an expired invite',
+  (await call(setup, { token: tok, password: 'a-long-enough-password' })).status === 400);
+
+tok = await mkInvite('i-good');
+// A live session that must not survive a password being set.
+sql.prepare(`INSERT INTO sessions VALUES ('stale','u4','t3',?,?,NULL,NULL)`).run(now, now + 9999);
+
+r = await call(setup, { token: tok, password: 'a-long-enough-password' });
+const setupCookie = ck(r);
+P('setup accepts a valid invite -> 200', r.status === 200);
+P('setup signs the user straight in', /HttpOnly/.test(r.headers.get('set-cookie') || ''));
+P('setup session works', (await call(me, null, setupCookie)).status === 200);
+P('the new password actually logs in',
+  (await call(login, { email: 'invitee@example.com', password: 'a-long-enough-password' })).status === 200);
+P('exactly one password credential exists',
+  sql.prepare(`SELECT count(*) c FROM credentials WHERE user_id='u4' AND kind='password'`).get().c === 1);
+P('older sessions are invalidated',
+  sql.prepare(`SELECT count(*) c FROM sessions WHERE id='stale'`).get().c === 0);
+P('the redemption is audited',
+  sql.prepare(`SELECT count(*) c FROM audit WHERE action='auth.password_set'`).get().c === 1);
+
+// The property the whole design rests on: a forwarded link is spent once.
+P('the same invite cannot be redeemed twice',
+  (await call(setup, { token: tok, password: 'another-long-password' })).status === 400);
+P('a second attempt did not change the password',
+  (await call(login, { email: 'invitee@example.com', password: 'another-long-password' })).status === 401);
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
