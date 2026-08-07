@@ -13,6 +13,11 @@ Dallas*.stl
 # /tools/, but that only asks crawlers nicely — this keeps them off the deploy.
 tools/
 
+# Internal documentation. These are written for the owner, not for visitors:
+# vendors, process, what is outsourced, platform plans. docs/AUTOMATION.md was
+# being served publicly at /docs/AUTOMATION.md until 2026-08-07.
+docs/
+
 # LF client job folders — never publish these to the live site
 Filing System/
 Real Estate/

@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex, nofollow" />
+<title>Floor Plan Editor — LF Property Media</title>
+
+<link rel="icon" href="/images/favicon.svg" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+
+<style>
+  :root{
+    --lf-paper:#faf8f5; --lf-ink:#1a1a1a; --lf-muted:#6b6b6b;
+    --lf-sand:#b08968; --lf-sand-dark:#8c6a4e; --lf-sand-light:#d4b896;
+    --panel:#1c1917; --panel-2:#262220; --hair:#3a332e;
+    --ok:#7fb069; --warn:#e0a45f; --bad:#d98063;
+    --font-display:"Playfair Display",Georgia,serif;
+    --font-body:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+    --lift-1:0 1px 2px rgba(38,26,16,.28), 0 2px 8px rgba(38,26,16,.20);
+    --lift-2:0 2px 4px rgba(0,0,0,.30), 0 10px 30px rgba(0,0,0,.34);
+    --ease-out:cubic-bezier(.22,.68,.36,1);
+    --ease-spring:cubic-bezier(.34,1.42,.48,1);
+    --s1:.375rem; --s2:.625rem; --s3:1rem; --s4:1.5rem; --s5:2.25rem;
+  }
+  *,*::before,*::after{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0; background:var(--lf-ink); color:var(--lf-paper);
+    font-family:var(--font-body); -webkit-font-smoothing:antialiased;
+    display:grid; grid-template-columns:minmax(0,1fr) 340px; overflow:hidden;
+  }
+  @media (max-width:1000px){
+    body{grid-template-columns:1fr; grid-template-rows:minmax(0,1fr) auto; overflow:auto;}
+  }
+
+  /* ---------------------------------------------------------------- plan */
+  .arena{
+    position:relative; display:grid; place-items:center; padding:var(--s4);
+    min-width:0; min-height:0; overflow:hidden;
+    background:
+      radial-gradient(1000px 600px at 28% 10%, rgba(176,137,104,.14), transparent 62%),
+      #0d0b09;
+  }
+  .plan{position:relative; box-shadow:var(--lift-2); max-width:100%; max-height:100%;}
+  .plan img{display:block; max-width:100%; max-height:calc(100vh - 6rem); user-select:none; -webkit-user-drag:none;}
+  .plan svg{position:absolute; inset:0; width:100%; height:100%; overflow:visible;}
+  .plan[data-empty="true"]{
+    width:min(620px,100%); aspect-ratio:4/3; display:grid; place-items:center;
+    border:1.5px dashed var(--hair); border-radius:4px; background:rgba(255,255,255,.02);
+  }
+  .drop{text-align:center; padding:var(--s4); max-width:34ch;}
+  .drop h2{font-family:var(--font-display); font-weight:400; font-size:1.25rem; margin:0 0 .5rem;}
+  .drop p{margin:0 0 var(--s3); font-size:.8125rem; line-height:1.65; color:var(--lf-muted);}
+  .arena[data-drag="true"]{outline:2px dashed var(--lf-sand); outline-offset:-10px;}
+
+  /* dots + web */
+  .edge{stroke:var(--lf-sand); stroke-width:2; opacity:.55; cursor:pointer;}
+  .edge:hover{stroke:var(--bad); opacity:1; stroke-width:3;}
+  .edge--hit{stroke:transparent; stroke-width:14; opacity:1; cursor:pointer;}
+  .rubber{stroke:var(--lf-sand-light); stroke-width:2; stroke-dasharray:5 5; pointer-events:none;}
+  .dot{cursor:grab;}
+  .dot:active{cursor:grabbing;}
+  .dot circle{
+    fill:rgba(18,13,9,.88); stroke:var(--lf-sand-light); stroke-width:2;
+    transition:fill .18s var(--ease-out), stroke .18s var(--ease-out);
+  }
+  .dot:hover circle{fill:var(--lf-sand-dark);}
+  .dot[data-anchor="true"] circle{fill:var(--lf-sand); stroke:var(--lf-paper); stroke-width:3;}
+  .dot text{
+    fill:var(--lf-paper); font:600 10px var(--font-body); text-anchor:middle;
+    paint-order:stroke; stroke:rgba(13,11,9,.85); stroke-width:3px; stroke-linejoin:round;
+    pointer-events:none; user-select:none;
+  }
+
+  /* ---------------------------------------------------------------- panel */
+  .panel{
+    background:var(--panel); border-left:1px solid var(--hair);
+    overflow-y:auto; padding:var(--s4) var(--s4) var(--s5);
+    display:flex; flex-direction:column; gap:var(--s3);
+  }
+  h1{font-family:var(--font-display); font-weight:400; font-size:1.4rem; letter-spacing:-.02em; margin:0 0 4px;}
+  h1 i{color:var(--lf-sand-light);}
+  .sub{margin:0; font-size:.78125rem; line-height:1.65; color:var(--lf-muted);}
+  h2{font-size:.65625rem; letter-spacing:.15em; text-transform:uppercase; color:var(--lf-sand-light); margin:0 0 var(--s2); font-weight:600;}
+  .group{border-top:1px solid var(--hair); padding-top:var(--s3);}
+
+  button,select,label.file{
+    font:inherit; color:var(--lf-paper); background:var(--panel-2);
+    border:1px solid var(--hair); border-radius:3px; padding:7px 11px;
+    font-size:.71875rem; letter-spacing:.06em; cursor:pointer; text-align:center;
+    transition:background-color .16s var(--ease-out), border-color .16s var(--ease-out),
+               transform .16s var(--ease-spring);
+  }
+  button:hover,select:hover,label.file:hover{background:#332d29; border-color:var(--lf-sand-dark);}
+  button:focus-visible,select:focus-visible{outline:2px solid var(--lf-sand-light); outline-offset:2px;}
+  button:active{transform:translateY(1px) scale(.985);}
+  button[disabled]{opacity:.42; cursor:default; transform:none;}
+  button.go{background:var(--lf-sand); border-color:var(--lf-sand); color:#17100a; font-weight:600;}
+  button.go:hover{background:var(--lf-sand-light); border-color:var(--lf-sand-light);}
+  .row{display:flex; gap:var(--s1); flex-wrap:wrap;}
+  .row > *{flex:1;}
+  input[type=file]{display:none;}
+
+  /* scene list */
+  .scenes{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:2px; max-height:34vh; overflow-y:auto;}
+  .scene{
+    display:flex; align-items:center; gap:var(--s2); padding:5px 7px; border-radius:3px;
+    font-size:.75rem; cursor:grab; border:1px solid transparent;
+    transition:background-color .16s var(--ease-out), border-color .16s var(--ease-out);
+  }
+  .scene:hover{background:#2b2623; border-color:var(--hair);}
+  .scene[data-placed="false"]{color:var(--warn);}
+  .scene[data-anchor="true"]{border-color:var(--lf-sand); background:rgba(176,137,104,.18);}
+  .scene__n{font-variant-numeric:tabular-nums; color:var(--lf-muted); font-size:.6875rem; min-width:1.4em;}
+  .scene__name{flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .scene__links{font-size:.65625rem; color:var(--lf-muted); font-variant-numeric:tabular-nums;}
+
+  .stat{display:flex; justify-content:space-between; font-size:.6875rem; letter-spacing:.06em;
+        text-transform:uppercase; color:var(--lf-muted); padding-top:.3rem;}
+  .stat b{color:var(--lf-sand-light); font-weight:500;}
+  .note{font-size:.6875rem; line-height:1.55; color:var(--lf-muted); margin:0;}
+  .fit{font-size:.71875rem; line-height:1.6; margin:var(--s2) 0 0; padding:var(--s2);
+       border-radius:3px; border:1px solid var(--hair); background:#141110;}
+  .fit b{font-weight:600;}
+  .fit[data-q="good"]{border-color:rgba(127,176,105,.5);} .fit[data-q="good"] b{color:var(--ok);}
+  .fit[data-q="ok"]{border-color:rgba(224,164,95,.5);}   .fit[data-q="ok"] b{color:var(--warn);}
+  .fit[data-q="bad"]{border-color:rgba(217,128,99,.5);}  .fit[data-q="bad"] b{color:var(--bad);}
+
+  .toast{
+    position:fixed; bottom:var(--s4); left:50%; transform:translate(-50%,14px);
+    background:var(--lf-sand); color:#17100a; padding:9px 18px; border-radius:3px;
+    font-size:.78125rem; font-weight:600; opacity:0; pointer-events:none; z-index:50;
+    box-shadow:var(--lift-2);
+    transition:opacity .22s var(--ease-out), transform .22s var(--ease-spring);
+  }
+  .toast[data-on="true"]{opacity:1; transform:translate(-50%,0);}
+  .err{margin:0; padding:var(--s3); background:#3a1f1a; border:1px solid #7a3b30;
+       border-radius:3px; font-size:.78125rem; line-height:1.6;}
+</style>
+</head>
+<body>
+
+<div class="arena" id="arena">
+  <div class="plan" id="plan" data-empty="true">
+    <div class="drop" id="drop">
+      <h2>Drop a floor plan here</h2>
+      <p>Any image of the layout — a PDF export, an MLS floor plan, a phone photo
+         of a sketch. Then drag rooms onto it from the list.</p>
+      <label class="file" for="fileInput">Choose an image</label>
+    </div>
+  </div>
+</div>
+
+<aside class="panel">
+  <div>
+    <h1>Floor plan <i>editor</i></h1>
+    <p class="sub">Place each 360 where it was shot, then join them so the tour
+      walks the way the house does.</p>
+  </div>
+
+  <p class="err" id="err" hidden></p>
+
+  <div class="group">
+    <h2>Floor plan</h2>
+    <div class="row">
+      <label class="file" for="fileInput">Replace image</label>
+      <button id="btnPlanDl" type="button">Download</button>
+    </div>
+    <input type="file" id="fileInput" accept="image/*" />
+    <p class="note" style="margin-top:var(--s2)">Saved into this browser, resized to
+      1600px. Download it as <code>floorplan.jpg</code> for the tour folder.</p>
+  </div>
+
+  <div class="group">
+    <h2>Rooms <span id="placedCount" style="float:right;text-transform:none;letter-spacing:0"></span></h2>
+    <p class="note" style="margin-bottom:var(--s2)">Drag a room onto the plan. Drag its
+      dot to move it. <strong>Click one dot then another</strong> to join or unjoin them;
+      click a line to remove it.</p>
+    <ul class="scenes" id="scenes"></ul>
+  </div>
+
+  <div class="group">
+    <h2>Hotspot directions</h2>
+    <p class="note">Each panorama has its own arbitrary north, so a plan bearing is not
+      a hotspot yaw on its own. This works the offset out from the hotspots you have
+      already aimed by hand, then points the rest the same way.</p>
+    <div class="row" style="margin-top:var(--s2)">
+      <button id="btnFit" type="button">Check the fit</button>
+      <button id="btnApply" type="button" disabled>Aim the rest</button>
+    </div>
+    <div class="fit" id="fitBox" hidden></div>
+  </div>
+
+  <div class="group">
+    <div class="stat"><span>Placed</span><b id="statPlaced">—</b></div>
+    <div class="stat"><span>Connections</span><b id="statLinks">—</b></div>
+    <div class="stat"><span>Unreachable</span><b id="statOrphan">—</b></div>
+    <div class="stat"><span>Saved</span><b id="statSave">—</b></div>
+  </div>
+
+  <div class="group">
+    <div class="row">
+      <button class="go" id="btnExport" type="button">Download tour.json</button>
+      <button id="btnReset" type="button">Reset</button>
+    </div>
+    <p class="note" style="margin-top:var(--s2)">Nothing here reaches the live site.
+      Send both files over and they go out with the next commit.</p>
+  </div>
+</aside>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { norm180, bearing as bearingOf, fit, predict } from './plan-fit.js';
+
+const TOUR = '/tours/2719-fort-worth-street/';
+const $ = (id) => document.getElementById(id);
+const fail = (m) => { $('err').hidden = false; $('err').textContent = m; };
+
+let tour;
+try {
+  const res = await fetch(TOUR + 'tour.json', { cache: 'no-cache' });
+  if (!res.ok) throw new Error(`tour.json -> HTTP ${res.status}`);
+  tour = await res.json();
+} catch (e) {
+  fail(`Could not load the tour: ${e.message}. Serve the site from the project root (node serve.mjs).`);
+  throw e;
+}
+
+const scenes = tour.scenes;
+const byId = new Map(scenes.map(s => [s.id, s]));
+
+/* --------------------------------------------------------------- storage */
+const KEY = `lf-floorplan:${TOUR}`;
+let planImg = null;                       // data URL of the floor plan
+const pos = new Map();                    // sceneId -> {x,y} normalised 0..1
+
+function save() {
+  try {
+    localStorage.setItem(KEY, JSON.stringify({
+      img: planImg,
+      pos: [...pos.entries()],
+      links: scenes.map(s => ({ id: s.id, links: s.links })),
+      at: Date.now(),
+    }));
+    $('statSave').textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  } catch (e) {
+    $('statSave').textContent = 'failed';
+    toast(e.name === 'QuotaExceededError'
+      ? 'Browser storage is full — try a smaller floor plan image'
+      : `Could not save: ${e.message}`);
+  }
+}
+
+(function restore() {
+  let d = null;
+  try { d = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch { /* corrupt */ }
+  if (!d) return;
+  if (d.img) planImg = d.img;
+  for (const [id, p] of d.pos ?? []) if (byId.has(id)) pos.set(id, p);
+  // Only take the stored graph if it still describes the scenes we just loaded.
+  for (const s of d.links ?? []) if (byId.has(s.id)) byId.get(s.id).links = s.links;
+  if (d.at) $('statSave').textContent = new Date(d.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+})();
+
+/* ------------------------------------------------------------ plan image */
+const arena = $('arena');
+const planEl = $('plan');
+let imgEl = null, svgEl = null;
+
+function setPlan(dataUrl) {
+  planImg = dataUrl;
+  planEl.dataset.empty = 'false';
+  planEl.innerHTML = '';
+  imgEl = document.createElement('img');
+  imgEl.alt = 'Floor plan';
+  imgEl.src = dataUrl;
+  imgEl.addEventListener('load', draw);
+  svgEl = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  planEl.append(imgEl, svgEl);
+  draw();
+}
+
+// Resized before storing: a phone photo of a floor plan is several megabytes and
+// localStorage caps out around five, which would silently lose the positions too.
+async function ingest(file) {
+  if (!file || !file.type.startsWith('image/')) return toast('That is not an image');
+  const bmp = await createImageBitmap(file);
+  const k = Math.min(1600 / bmp.width, 1);
+  const c = document.createElement('canvas');
+  c.width = Math.round(bmp.width * k);
+  c.height = Math.round(bmp.height * k);
+  c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+  setPlan(c.toDataURL('image/jpeg', 0.82));
+  save();
+  toast(`Floor plan loaded (${c.width}×${c.height})`);
+}
+
+$('fileInput').addEventListener('change', (e) => ingest(e.target.files[0]));
+arena.addEventListener('dragover', (e) => { e.preventDefault(); arena.dataset.drag = 'true'; });
+arena.addEventListener('dragleave', () => { arena.dataset.drag = 'false'; });
+arena.addEventListener('drop', (e) => {
+  e.preventDefault();
+  arena.dataset.drag = 'false';
+  if (e.dataTransfer.files[0]) ingest(e.dataTransfer.files[0]);
+});
+$('btnPlanDl').addEventListener('click', () => {
+  if (!planImg) return toast('No floor plan loaded');
+  const a = document.createElement('a');
+  a.href = planImg; a.download = 'floorplan.jpg'; a.click();
+});
+
+/* ---------------------------------------------------------------- graph */
+function connected(a, b) { return byId.get(a).links.some(l => l.to === b); }
+
+function join(a, b) {
+  if (a === b || connected(a, b)) return false;
+  // Reciprocal, like the 3D editor: a one-way door strands the visitor.
+  byId.get(a).links.push({ to: b, yaw: 0, pitch: -8, estimated: true });
+  byId.get(b).links.push({ to: a, yaw: 0, pitch: -8, estimated: true });
+  return true;
+}
+function split(a, b) {
+  byId.get(a).links = byId.get(a).links.filter(l => l.to !== b);
+  byId.get(b).links = byId.get(b).links.filter(l => l.to !== a);
+}
+
+/** Scenes unreachable from the tour's entry point — a web that looks joined can
+ *  still leave a wing stranded, and that is invisible until someone walks it. */
+function orphans() {
+  const seen = new Set([tour.defaultScene]);
+  const queue = [tour.defaultScene];
+  while (queue.length) {
+    for (const l of byId.get(queue.pop()).links) {
+      if (!seen.has(l.to)) { seen.add(l.to); queue.push(l.to); }
+    }
+  }
+  return scenes.filter(s => !seen.has(s.id)).map(s => s.id);
+}
+
+/* ---------------------------------------------------------------- render */
+let anchor = null;          // scene id awaiting its partner
+let rubber = null;          // {x,y} cursor position while anchored
+const NS = 'http://www.w3.org/2000/svg';
+const el = (n, attrs) => {
+  const e = document.createElementNS(NS, n);
+  for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+  return e;
+};
+
+function draw() {
+  if (!svgEl || !imgEl) return;
+  const w = imgEl.clientWidth, h = imgEl.clientHeight;
+  if (!w || !h) return;
+  svgEl.setAttribute('viewBox', `0 0 ${w} ${h}`);
+  svgEl.innerHTML = '';
+  const at = (id) => { const p = pos.get(id); return p && { x: p.x * w, y: p.y * h }; };
+
+  const done = new Set();
+  for (const s of scenes) {
+    const a = at(s.id);
+    if (!a) continue;
+    for (const l of s.links) {
+      const key = [s.id, l.to].sort().join('|');
+      if (done.has(key)) continue;
+      const b = at(l.to);
+      if (!b) continue;
+      done.add(key);
+      const line = { x1: a.x, y1: a.y, x2: b.x, y2: b.y };
+      svgEl.append(el('line', { ...line, class: 'edge' }));
+      const hit = el('line', { ...line, class: 'edge--hit' });
+      hit.addEventListener('click', (e) => {
+        e.stopPropagation();
+        split(s.id, l.to);
+        toast(`Unjoined ${byId.get(s.id).name} and ${byId.get(l.to).name}`);
+        commit();
+      });
+      svgEl.append(hit);
+    }
+  }
+
+  if (anchor && rubber && at(anchor)) {
+    const a = at(anchor);
+    svgEl.append(el('line', { x1: a.x, y1: a.y, x2: rubber.x, y2: rubber.y, class: 'rubber' }));
+  }
+
+  scenes.forEach((s, i) => {
+    const p = at(s.id);
+    if (!p) return;
+    const g = el('g', { class: 'dot', transform: `translate(${p.x} ${p.y})` });
+    g.dataset.id = s.id;
+    if (anchor === s.id) g.dataset.anchor = 'true';
+    g.append(el('circle', { r: 13 }));
+    const t = el('text', { y: 4 });
+    t.textContent = String(i + 1).padStart(2, '0');
+    g.append(t);
+    const title = el('title', {});
+    title.textContent = s.name;
+    g.append(title);
+    svgEl.append(g);
+  });
+}
+
+function renderList() {
+  $('scenes').innerHTML = scenes.map((s, i) => `
+    <li class="scene" draggable="true" data-id="${s.id}"
+        data-placed="${pos.has(s.id)}" data-anchor="${anchor === s.id}">
+      <span class="scene__n">${String(i + 1).padStart(2, '0')}</span>
+      <span class="scene__name">${s.name}</span>
+      <span class="scene__links">${s.links.length}</span>
+    </li>`).join('');
+}
+
+function renderStats() {
+  const placed = pos.size;
+  const links = scenes.reduce((n, s) => n + s.links.length, 0) / 2;
+  const orph = orphans();
+  $('statPlaced').textContent = `${placed} / ${scenes.length}`;
+  $('statLinks').textContent = String(links);
+  $('statOrphan').textContent = orph.length ? `${orph.length} room${orph.length > 1 ? 's' : ''}` : 'none';
+  $('placedCount').textContent = placed < scenes.length ? `${scenes.length - placed} to place` : 'all placed';
+}
+
+function commit() { draw(); renderList(); renderStats(); save(); }
+
+/* ------------------------------------------------------- place and connect */
+$('scenes').addEventListener('dragstart', (e) => {
+  const li = e.target.closest('.scene');
+  if (li) e.dataTransfer.setData('text/plain', li.dataset.id);
+});
+planEl.addEventListener('dragover', (e) => e.preventDefault());
+planEl.addEventListener('drop', (e) => {
+  const id = e.dataTransfer.getData('text/plain');
+  if (!id || !byId.has(id) || !imgEl) return;
+  e.preventDefault();
+  e.stopPropagation();
+  const r = imgEl.getBoundingClientRect();
+  pos.set(id, { x: (e.clientX - r.left) / r.width, y: (e.clientY - r.top) / r.height });
+  commit();
+});
+
+// Drag moves a dot; a click that never moved is a connect gesture. Same pointer
+// down either way, so the two are told apart by distance travelled rather than
+// by putting the editor into a mode.
+let drag = null;
+planEl.addEventListener('pointerdown', (e) => {
+  const g = e.target.closest?.('.dot');
+  if (!g) return;
+  e.preventDefault();
+  drag = { id: g.dataset.id, x0: e.clientX, y0: e.clientY, moved: false };
+  planEl.setPointerCapture(e.pointerId);
+});
+planEl.addEventListener('pointermove', (e) => {
+  if (drag) {
+    if (Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0) > 4) drag.moved = true;
+    if (drag.moved) {
+      const r = imgEl.getBoundingClientRect();
+      pos.set(drag.id, {
+        x: Math.min(Math.max((e.clientX - r.left) / r.width, 0), 1),
+        y: Math.min(Math.max((e.clientY - r.top) / r.height, 0), 1),
+      });
+      draw();
+    }
+    return;
+  }
+  if (anchor && imgEl) {
+    const r = imgEl.getBoundingClientRect();
+    rubber = { x: e.clientX - r.left, y: e.clientY - r.top };
+    draw();
+  }
+});
+planEl.addEventListener('pointerup', (e) => {
+  if (!drag) return;
+  const { id, moved } = drag;
+  drag = null;
+  try { planEl.releasePointerCapture(e.pointerId); } catch { /* gone */ }
+  if (moved) return commit();
+
+  if (!anchor) { anchor = id; rubber = null; }
+  else if (anchor === id) { anchor = null; rubber = null; }
+  else {
+    const a = anchor;
+    anchor = null; rubber = null;
+    if (connected(a, id)) { split(a, id); toast(`Unjoined ${byId.get(a).name} and ${byId.get(id).name}`); }
+    else if (join(a, id)) toast(`Joined ${byId.get(a).name} → ${byId.get(id).name}`);
+  }
+  commit();
+});
+// Clicking away cancels a half-made connection rather than leaving it armed.
+planEl.addEventListener('click', (e) => {
+  if (!e.target.closest('.dot') && !e.target.closest('.edge--hit') && anchor) {
+    anchor = null; rubber = null; commit();
+  }
+});
+addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && anchor) { anchor = null; rubber = null; commit(); }
+});
+addEventListener('resize', draw);
+
+/* --------------------------------------------------------------- bearings
+   The maths lives in plan-fit.js so it can be tested directly; this only
+   gathers the evidence. A hotspot counts as evidence when it was aimed by hand
+   (estimated === false) and both its rooms are on the plan. */
+const bearing = (a, b) => {
+  const p = pos.get(a), q = pos.get(b);
+  return p && q ? bearingOf(p, q) : null;
+};
+
+function calibrate() {
+  const samples = [];
+  for (const s of scenes) {
+    for (const l of s.links) {
+      if (l.estimated === false) {
+        const b = bearing(s.id, l.to);
+        if (b !== null) samples.push({ from: s.id, yaw: l.yaw, bearing: b });
+      }
+    }
+  }
+  const r = fit(samples);
+  return r.ok ? { ...r, covered: r.offsets.size } : r;
+}
+
+function showFit(f) {
+  const box = $('fitBox');
+  box.hidden = false;
+  if (!f.ok) {
+    box.dataset.q = 'bad';
+    box.innerHTML = `<b>Not enough to go on.</b><br>Aim a few hotspots in the tour
+      editor first — ${f.reason}.`;
+    $('btnApply').disabled = true;
+    return;
+  }
+  const q = f.mean < 12 ? 'good' : f.mean < 30 ? 'ok' : 'bad';
+  box.dataset.q = q;
+  box.innerHTML = `<b>${f.mean.toFixed(1)}° average error</b> across ${f.samples}
+    aimed hotspot${f.samples > 1 ? 's' : ''}, worst ${f.worst.toFixed(0)}°.
+    ${f.covered} of ${scenes.length} rooms have an offset.<br>` + (
+    q === 'good' ? 'Tight enough to aim the rest from the plan.'
+    : q === 'ok' ? 'Usable, but check the results — dots may be slightly off where the camera stood.'
+    : 'Too loose to trust. Usually means a dot is in the wrong room, or the plan is not to scale.');
+  $('btnApply').disabled = q === 'bad' || f.covered === 0;
+  $('btnApply').dataset.sign = f.sign;
+}
+
+let lastFit = null;
+$('btnFit').addEventListener('click', () => { lastFit = calibrate(); showFit(lastFit); });
+
+$('btnApply').addEventListener('click', () => {
+  if (!lastFit?.ok) return;
+  const { sign, offsets } = lastFit;
+  let n = 0, skipped = 0;
+  for (const s of scenes) {
+    const off = offsets.get(s.id);
+    for (const l of s.links) {
+      if (l.estimated === false) continue;     // never overwrite a hand-aimed one
+      const b = bearing(s.id, l.to);
+      if (off === undefined || b === null) { skipped++; continue; }
+      l.yaw = predict(sign, off, b);
+      l.pitch = -8;
+      n++;                                     // stays estimated: this is a guess
+    }
+  }
+  commit();
+  toast(`Aimed ${n} hotspot${n === 1 ? '' : 's'}${skipped ? `, ${skipped} had no offset` : ''}`);
+});
+
+/* ---------------------------------------------------------------- export */
+$('btnExport').addEventListener('click', () => {
+  const out = structuredClone(tour);
+  out.floorPlan = { src: 'floorplan.jpg' };
+  for (const s of out.scenes) {
+    const p = pos.get(s.id);
+    if (p) s.plan = { x: +p.x.toFixed(4), y: +p.y.toFixed(4) };
+  }
+  const blob = new Blob([JSON.stringify(out, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'tour.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  const orph = orphans();
+  toast(orph.length ? `Downloaded — but ${orph.length} room(s) are unreachable` : 'tour.json downloaded');
+});
+
+$('btnReset').addEventListener('click', () => {
+  if (!confirm('Clear the floor plan, every dot and every connection you have drawn here?')) return;
+  localStorage.removeItem(KEY);
+  location.reload();
+});
+
+let toastTimer;
+function toast(m) {
+  const t = $('toast');
+  t.textContent = m; t.dataset.on = 'true';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.dataset.on = 'false'; }, 2400);
+}
+
+if (planImg) setPlan(planImg);
+renderList();
+renderStats();
+</script>
+</body>
+</html>

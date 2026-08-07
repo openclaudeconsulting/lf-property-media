@@ -82,6 +82,28 @@
     background:linear-gradient(to bottom,rgba(12,9,6,.78) 0%,rgba(12,9,6,.42) 55%,transparent 100%);
   }
   .brand{display:flex; align-items:center; gap:var(--space-3); pointer-events:auto;}
+  /* Way out. A tour opened from a listing is a dead end on a phone -- there is
+     no browser chrome in standalone mode and the rail eats the swipe-back
+     gesture -- so the exit has to be on screen, not assumed. */
+  .back{
+    width:38px; height:38px; flex:none; display:grid; place-items:center;
+    border:1px solid rgba(212,184,150,.30); border-radius:2px;
+    background:rgba(18,13,9,.68); backdrop-filter:blur(10px);
+    box-shadow:var(--lift-1); outline-offset:2px; text-decoration:none;
+    transition:transform .3s var(--ease-spring), background-color .3s var(--ease-out),
+               border-color .3s var(--ease-out);
+  }
+  .back svg{width:18px; height:18px; stroke:var(--lf-paper); fill:none;
+            stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round;}
+  .back:hover{background:rgba(176,137,104,.90); border-color:var(--lf-sand-light); transform:translateX(-2px);}
+  .back:focus-visible{outline:2px solid var(--lf-sand-light);}
+  .back:active{transform:translateX(0) scale(.94);}
+  /* The address is the tour's title on a phone; the rule beside it is chrome
+     that only earns its place when there is room for both. */
+  @media (max-width:560px){
+    .brand{gap:var(--space-2);}
+    .brand__rule,.brand__mark{display:none;}
+  }
   .brand__mark{
     font-family:var(--font-display); font-size:1.5rem; line-height:1;
     letter-spacing:-.02em; color:var(--lf-paper); text-decoration:none;
@@ -295,6 +317,40 @@
     padding-top:.25rem; border-top:1px solid rgba(212,184,150,.18);
   }
   .author .stat b{color:var(--lf-sand-light); font-weight:500;}
+  .author .note{
+    font-size:.6875rem; line-height:1.55; color:rgba(250,248,245,.52);
+    border-top:1px solid rgba(212,184,150,.18); padding-top:.5rem;
+  }
+  .author button.act--go{
+    background:var(--lf-sand); border-color:var(--lf-sand); color:#17100a; font-weight:600;
+  }
+  .author button.act--go:hover{background:var(--lf-sand-light); border-color:var(--lf-sand-light);}
+  .author button.act[disabled]{opacity:.42; cursor:default;}
+  .author button.act[disabled]:hover{
+    border-color:rgba(212,184,150,.34); background:rgba(10,7,5,.75);
+  }
+
+  /* Restored-draft bar. Sits under the header rather than over the photograph,
+     because it can persist for a while and must never cover a room. */
+  .draft{
+    position:fixed; top:84px; left:var(--space-4); z-index:45; max-width:min(30rem,calc(100vw - 2rem));
+    display:flex; gap:var(--space-3); align-items:center; flex-wrap:wrap;
+    background:rgba(18,13,9,.94); backdrop-filter:blur(14px);
+    border:1px solid rgba(212,184,150,.30); border-left:3px solid var(--lf-sand);
+    border-radius:3px; box-shadow:var(--lift-2); padding:.625rem .875rem;
+    font-size:.78125rem; line-height:1.5;
+  }
+  .draft[hidden]{display:none;}
+  .draft__acts{display:flex; gap:var(--space-1); margin-left:auto;}
+  .draft button{
+    padding:.3rem .55rem; border-radius:2px; font-size:.71875rem; white-space:nowrap;
+    border:1px solid rgba(212,184,150,.34); background:rgba(10,7,5,.75);
+    color:var(--lf-paper); cursor:pointer; outline-offset:2px;
+    transition:border-color .25s var(--ease-out), background-color .25s var(--ease-out);
+  }
+  .draft button:hover{border-color:var(--lf-sand-light); background:rgba(176,137,104,.28);}
+  .draft button:focus-visible{outline:2px solid var(--lf-sand-light);}
+  .draft button:active{transform:scale(.99);}
 
   .toast{
     position:fixed; left:50%; bottom:calc(var(--rail-h) + 84px); transform:translateX(-50%) translateY(8px);
@@ -337,6 +393,9 @@
 
 <header class="topbar">
   <div class="brand">
+    <a class="back" id="back" href="/" title="Back to the listing" aria-label="Back to the listing">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+    </a>
     <a class="brand__mark" href="/">LF<i>.</i></a>
     <div class="brand__rule"></div>
     <div class="brand__addr">
@@ -386,10 +445,27 @@
 
   <div class="row">
     <button class="act" id="btnUndo">Undo</button>
+    <button class="act act--go" id="btnSave">Save</button>
+  </div>
+  <div class="row">
     <button class="act" id="btnExport">Download tour.json</button>
+    <button class="act" id="btnDiscard">Discard</button>
   </div>
   <div class="stat"><span>Confirmed</span><b id="statConf">0 / 0</b></div>
+  <div class="stat"><span>Saved</span><b id="statSave">—</b></div>
+  <p class="note" id="pubNote">Save keeps your edits in this browser. The live site
+    only changes when a new <code>tour.json</code> is committed — use Download and
+    send it over.</p>
 </section>
+
+<div class="draft" id="draftBar" hidden>
+  <span id="draftMsg"></span>
+  <div class="draft__acts">
+    <button type="button" id="draftKeep" hidden>Keep mine</button>
+    <button type="button" id="draftDrop">Discard</button>
+    <button type="button" id="draftHide">OK</button>
+  </div>
+</div>
 
 <nav class="rail" id="rail" aria-label="Rooms"></nav>
 <div class="toast" id="toast"></div>
@@ -429,7 +505,49 @@ const scenes = tour.scenes;
 const byId = new Map(scenes.map(s => [s.id, s]));
 const deg = Math.PI / 180;
 
+/* ------------------------------------------------------- draft persistence
+   This is a static site: nothing the editor does can reach the server. Edits
+   used to live only in this page's memory, so a refresh threw the lot away.
+   They are now mirrored into localStorage on every change and restored on load.
+
+   `base` records the published graph as it stood when the draft began. If a new
+   tour.json is later committed, a draft built on the old baseline must not
+   silently win -- stale hotspot positions reappearing over a corrected tour is
+   worse than losing them -- so that case asks instead of restoring.
+
+   Keyed on pathname so each property's tour keeps its own draft. */
+const DRAFT_KEY = `lf-tour-draft:${location.pathname}`;
+const linksJSON = () => JSON.stringify(scenes.map(s => ({ id: s.id, links: s.links })));
+const PUBLISHED = linksJSON();
+
+function applyLinks(json) {
+  for (const { id, links } of JSON.parse(json)) {
+    const s = byId.get(id);
+    if (s) s.links = links;
+  }
+}
+
+let stored = null;
+try { stored = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null'); } catch { /* corrupt */ }
+
+// 'clean'    -> restored on top of the same published graph it was built from
+// 'conflict' -> published tour.json moved on; hold the draft back and ask
+// null       -> nothing to restore, or the draft matches what is published
+let draftState = null;
+if (stored?.links && stored.links !== PUBLISHED) {
+  if (stored.base === PUBLISHED) { applyLinks(stored.links); draftState = 'clean'; }
+  else draftState = 'conflict';
+} else if (stored) {
+  localStorage.removeItem(DRAFT_KEY);   // draft equals published: nothing to keep
+}
+
 /* ---------------------------------------------------------------- chrome */
+// Back to the listing this tour belongs to. Explicit in tour.json when a tour
+// lives somewhere unusual, derived from the slug otherwise, so a new property
+// gets a working exit without anyone remembering to set it.
+const slug = location.pathname.replace(/\/+$/, '').split('/').pop();
+document.getElementById('back').href = tour.property.listingUrl || `/properties/${slug}/`;
+
 document.getElementById('addr').textContent = tour.property.address;
 document.getElementById('city').textContent = `${tour.property.city}, ${tour.property.state}`;
 document.getElementById('facts').innerHTML = [
@@ -490,6 +608,27 @@ const viewer = new Viewer({
       renderMode: '2d',
       nodes,
       startNodeId: tour.defaultScene,
+      // Decode the next room's panorama while the visitor is still looking at
+      // this one. At 6080x3040 the decode is the slow part of a hop, and it is
+      // what makes an un-preloaded transition land with a jolt.
+      preload: true,
+      /* Arrival orientation.
+         PSV's default is `rotateTo: fromLinkPosition` -- the yaw of the doorway
+         measured in the room you just LEFT. Every panorama has its own arbitrary
+         north, set by however the camera happened to be facing on the tripod, so
+         that number means nothing in the room you arrive in: you get dropped
+         pointing at a random wall and have to re-find yourself every hop.
+
+         The return link is the fix. It lives in the destination's own frame and
+         points back the way you came, so facing 180deg from it puts the doorway
+         you just walked through behind you -- which is what walking through a
+         door actually does. Flip the +180 to arrive looking back at it instead. */
+      transitionOptions: (node, fromNode) => {
+        if (!fromNode) return {};
+        const back = byId.get(node.id)?.links.find(l => l.to === fromNode.id);
+        if (!back) return {};                 // no return link: leave PSV's default
+        return { rotateTo: { yaw: (back.yaw + 180) * deg, pitch: 0 } };
+      },
       // Off. PSV pops a thumbnail card on hotspot hover, and because it only
       // tears that card down on mouseleave, clicking a doorway -- which pulls
       // the arrow out from under the cursor -- strands one on screen for good.
@@ -613,6 +752,56 @@ function rebuild(id) {
   })), id);
   stats();
   markSelected();
+  autosave();          // every edit funnels through here, so this is the one hook
+}
+
+/* --- saving --------------------------------------------------------------
+   Autosave runs on a short debounce so a drag does not write on every frame,
+   and the Save button forces it through immediately. Save is deliberately not
+   silent: the status line and the note under it are the only things telling the
+   owner that "saved" means this browser, not the live site. */
+const statSave = document.getElementById('statSave');
+let saveTimer = null;
+// Tracks an edit that has not reached localStorage yet. A timer id alone cannot
+// do this: setTimeout ids stay truthy after firing, so a `if (saveTimer)` guard
+// is true forever after the first edit and every later navigation re-saves --
+// which, once the graph matches published again, *deletes* the stored draft.
+let pending = false;
+
+function cancelPendingSave() {
+  clearTimeout(saveTimer);
+  saveTimer = null;
+  pending = false;
+}
+
+function saveNow() {
+  const links = linksJSON();
+  try {
+    if (links === PUBLISHED) localStorage.removeItem(DRAFT_KEY);
+    else localStorage.setItem(DRAFT_KEY, JSON.stringify({
+      base: PUBLISHED, links, at: Date.now(),
+    }));
+  } catch (e) {
+    statSave.textContent = 'failed';
+    say(`Could not save: ${e.name === 'QuotaExceededError' ? 'browser storage is full' : e.message}`);
+    return false;
+  }
+  pending = false;
+  showSaved(links === PUBLISHED ? null : Date.now());
+  return true;
+}
+
+function showSaved(at) {
+  statSave.textContent = at
+    ? new Date(at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    : 'matches published';
+}
+
+function autosave() {
+  pending = true;
+  statSave.textContent = 'saving…';
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => { saveTimer = null; saveNow(); }, 600);
 }
 
 /* One snapshot of the whole graph per edit. Links are reciprocal, so a single
@@ -813,6 +1002,27 @@ document.getElementById('btnUndo').addEventListener('click', () => {
   say('Reverted');
 });
 
+document.getElementById('btnSave').addEventListener('click', () => {
+  clearTimeout(saveTimer);
+  saveTimer = null;
+  if (!saveNow()) return;
+  say(linksJSON() === PUBLISHED
+    ? 'Nothing changed from the published tour'
+    : 'Saved in this browser — Download to put it live');
+});
+
+document.getElementById('btnDiscard').addEventListener('click', () => {
+  if (linksJSON() === PUBLISHED) return say('Already matches the published tour');
+  localStorage.removeItem(DRAFT_KEY);
+  applyLinks(PUBLISHED);
+  undo.length = 0;                  // those snapshots describe a graph that is gone
+  deselect();
+  rebuild(currentId);
+  cancelPendingSave();              // rebuild re-armed autosave; nothing left to write
+  showSaved(null);
+  say('Reverted to the published tour');
+});
+
 document.getElementById('btnExport').addEventListener('click', () => {
   const blob = new Blob([JSON.stringify(tour, null, 2)], { type: 'application/json' });
   const a = document.createElement('a');
@@ -822,6 +1032,60 @@ document.getElementById('btnExport').addEventListener('click', () => {
   URL.revokeObjectURL(a.href);
   say('tour.json downloaded');
 });
+
+/* --- restored-draft bar ---------------------------------------------------
+   A restored draft changes what is on screen without the owner touching
+   anything, so it has to announce itself. The conflict case is the one that
+   matters: it holds the draft back rather than applying it, because silently
+   reinstating old hotspots over a freshly published tour is the failure that
+   would be hardest to notice. */
+const draftBar = document.getElementById('draftBar');
+const draftKeep = document.getElementById('draftKeep');
+const draftHide = document.getElementById('draftHide');
+
+if (draftState === 'clean') {
+  const when = stored.at ? new Date(stored.at).toLocaleString([], {
+    month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'earlier';
+  document.getElementById('draftMsg').textContent = `Restored your unsaved edits from ${when}.`;
+  draftBar.hidden = false;
+  showSaved(stored.at);
+} else if (draftState === 'conflict') {
+  document.getElementById('draftMsg').textContent =
+    'You have older edits saved here, but the published tour has changed since. '
+    + 'Keeping yours would undo whatever changed.';
+  draftKeep.hidden = false;
+  draftHide.hidden = true;
+  draftBar.hidden = false;
+  showSaved(null);
+} else {
+  showSaved(null);
+}
+
+draftKeep.addEventListener('click', () => {
+  applyLinks(stored.links);
+  undo.length = 0;
+  deselect();
+  rebuild(currentId);          // re-arms autosave, which rebases onto the new published
+  draftBar.hidden = true;
+  say('Kept your edits');
+});
+document.getElementById('draftDrop').addEventListener('click', () => {
+  localStorage.removeItem(DRAFT_KEY);
+  applyLinks(PUBLISHED);
+  undo.length = 0;
+  deselect();
+  rebuild(currentId);
+  cancelPendingSave();
+  showSaved(null);
+  draftBar.hidden = true;
+  say('Discarded — showing the published tour');
+});
+draftHide.addEventListener('click', () => { draftBar.hidden = true; });
+
+// Last line of defence: the debounce means closing the tab quickly after an edit
+// could outrun the write. Only flushes a genuinely unwritten change -- saving
+// unconditionally here would delete the draft on every ordinary navigation.
+addEventListener('pagehide', () => { if (pending) { cancelPendingSave(); saveNow(); } });
 
 // A selection belongs to the room you were standing in, so leaving clears it.
 vt.addEventListener('node-changed', () => { deselect(); refreshDest(); });
