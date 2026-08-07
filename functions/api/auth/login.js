@@ -1,4 +1,4 @@
-import { verifyPassword } from '../../_lib/crypto.js';
+import { verifyPassword, ITERATIONS } from '../../_lib/crypto.js';
 import { createSession, cookieHeader, json } from '../../_lib/session.js';
 
 /* Deliberately uniform failures.
@@ -7,8 +7,15 @@ import { createSession, cookieHeader, json } from '../../_lib/session.js';
  * because the dummy verify below burns the same PBKDF2 cost as a real one --
  * close to the same duration. Skipping the hash for an unknown address is the
  * classic account-enumeration leak: the "no such user" path returns in 2ms and
- * the "wrong password" path in 70ms, so anyone can map who has an account. */
-const DUMMY = 'pbkdf2$sha256$600000$AAAAAAAAAAAAAAAAAAAAAA==$AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=';
+ * the "wrong password" path in 70ms, so anyone can map who has an account.
+ *
+ * Built from ITERATIONS rather than written out, for two reasons. It has to be a
+ * cost this platform can actually run -- a hardcoded 600k here threw on Workers
+ * and turned every unknown-email login into a 500. And it has to match what real
+ * hashes cost, or the timing it exists to equalise diverges the moment the
+ * constant changes. Padding is valid base64 for a 16-byte salt and a 32-byte
+ * digest, so it parses and derives exactly like a real credential. */
+const DUMMY = `pbkdf2$sha256$${ITERATIONS}$${'A'.repeat(22)}==$${'A'.repeat(43)}=`;
 
 export const onRequestPost = async ({ request, env }) => {
   let body;

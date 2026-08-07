@@ -134,5 +134,15 @@ P('corrupt base64 salt fails closed', (await verifyPassword('x', 'pbkdf2$sha256$
 P('high cost verifies (no ceiling on Node) rather than throwing',
   (await verifyPassword('x', 'pbkdf2$sha256$600000$AAAAAAAAAAAAAAAAAAAAAA==$AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=')) === false);
 
+/* The login handler's dummy hash, rebuilt here from the same constant. It must
+   parse and derive like a real credential: when it was hardcoded at 600k it
+   threw on Workers, so every login with an unknown email returned 500 -- which
+   both broke the endpoint and blew the anti-enumeration property wide open. */
+const DUMMY = `pbkdf2$sha256$${MAX_ITERATIONS}$${'A'.repeat(22)}==$${'A'.repeat(43)}=`;
+let dummyOk = true;
+try { await verifyPassword('anything', DUMMY); } catch { dummyOk = false; }
+P('login dummy hash is usable at the platform ceiling', dummyOk);
+P('login dummy hash never matches a password', (await verifyPassword('anything', DUMMY)) === false);
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
