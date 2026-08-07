@@ -17,9 +17,18 @@
 
 const enc = new TextEncoder();
 
-// OWASP's floor for PBKDF2-HMAC-SHA256. Costs real CPU time per login -- see
-// docs/PLATFORM-PLAN.md on the Workers CPU budget before lowering it.
-export const ITERATIONS = 600_000;
+/* Cloudflare Workers refuses PBKDF2 above 100,000 iterations: deriveBits throws
+ * rather than returning, and it is a hard platform ceiling, not a budget.
+ * Measured against a deployed preview -- 100k logs in, 250k and 600k both throw.
+ *
+ * That is below OWASP's 600k recommendation for PBKDF2-HMAC-SHA256, and it is
+ * the strongest reason to move to Argon2id via WASM once this carries real
+ * accounts. The stored format is self-describing precisely so that swap can
+ * happen without invalidating anyone: verify reads the scheme and cost out of
+ * the hash it is checking.
+ */
+export const MAX_ITERATIONS = 100_000;
+export const ITERATIONS = MAX_ITERATIONS;
 const KEY_LEN = 32;         // bytes
 const SALT_LEN = 16;
 
@@ -34,22 +43,49 @@ async function derive(password, salt, iterations) {
 }
 
 export async function hashPassword(password, iterations = ITERATIONS) {
+  // Refuse to write a hash this platform cannot read back. Without this the
+  // failure surfaces at the victim's next login, not at the point of the mistake.
+  if (iterations > MAX_ITERATIONS) {
+    throw new RangeError(
+      `PBKDF2 iterations ${iterations} exceeds the Workers ceiling of ${MAX_ITERATIONS}`);
+  }
   const salt = crypto.getRandomValues(new Uint8Array(SALT_LEN));
   const bits = await derive(password, salt, iterations);
   return `pbkdf2$sha256$${iterations}$${b64(salt)}$${b64(bits)}`;
 }
 
 export async function verifyPassword(password, stored) {
-  // A malformed or missing hash must fail closed, never throw -- an exception
-  // here would be a 500 that tells an attacker the account exists.
+  // A hash that is missing or the wrong shape means "no usable credential", so
+  // it fails closed and says nothing about whether the account exists.
+  const parts = String(stored ?? '').split('$');
+  if (parts.length !== 5) return false;
+  const [scheme, hash, iters, salt, expected] = parts;
+  if (scheme !== 'pbkdf2' || hash !== 'sha256') return false;
+  const n = Number(iters);
+  if (!Number.isInteger(n) || n < 1) return false;
+
+  // Corrupt base64 is a damaged stored credential -- one account's problem, and
+  // it fails closed like any other unusable hash.
+  let saltBytes, expectedBytes;
   try {
-    const [scheme, hash, iters, salt, expected] = String(stored).split('$');
-    if (scheme !== 'pbkdf2' || hash !== 'sha256') return false;
-    const bits = await derive(password, unb64(salt), Number(iters));
-    return timingSafeEqual(new Uint8Array(bits), unb64(expected));
+    saltBytes = unb64(salt);
+    expectedBytes = unb64(expected);
   } catch {
     return false;
   }
+
+  let bits;
+  try {
+    bits = await derive(password, saltBytes, n);
+  } catch (cause) {
+    // A failure of the crypto engine itself is everyone's problem: a bad cost
+    // parameter, a missing algorithm, a platform limit. Returning false here is
+    // exactly what hid the 100k iteration ceiling -- every login came back
+    // "invalid credentials" with clean logs. Surface it.
+    throw new Error(`password verification failed at ${n} iterations: ${cause.message}`,
+      { cause });
+  }
+  return timingSafeEqual(new Uint8Array(bits), expectedBytes);
 }
 
 /** Comparison whose duration does not depend on where the first difference is. */

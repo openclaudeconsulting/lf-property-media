@@ -160,6 +160,31 @@ Consequences:
 - Anyone picking this up on a path without spaces should try `pages dev` again
   first; it is likely to just work, and it is the fastest way to close that gap.
 
+**Cloudflare Workers caps PBKDF2 at 100,000 iterations.** Above that
+`crypto.subtle.deriveBits` throws. Measured on a deployed preview: 100k logs in,
+250k and 600k both fail. It is a platform ceiling, not a CPU budget, so paying
+for more CPU does not lift it.
+
+Two consequences worth carrying forward:
+
+- **100k is below OWASP's 600k recommendation** for PBKDF2-HMAC-SHA256. This is
+  the strongest argument for moving to Argon2id via WASM once real accounts
+  exist. The stored hash format is self-describing so that swap does not
+  invalidate anyone.
+- **Node cannot catch this.** `tools/test-auth.mjs` runs on Node, which has no
+  ceiling, so a 600k hash passed every local test and failed only in production.
+  Anything touching WebCrypto limits has to be checked on a preview deployment.
+
+The related bug was mine: `verifyPassword` caught everything and returned false,
+so an engine failure was indistinguishable from a wrong password. Every account
+would have been unloggable-into with clean logs. It now fails closed only for an
+unusable *stored credential*, and throws when the crypto engine itself fails.
+
+**Workers Paid may not be required after all.** The earlier note assumed 600k
+iterations at ~66ms CPU against a 10ms free-plan cap. At the enforced 100k the
+cost is roughly a tenth of that, and login was measured working on a preview
+without changing plans. Re-check before spending on it.
+
 **Bindings are not in this repo.** A Pages *git* deployment ignores
 `wrangler.jsonc`; production bindings (`DB` → `lf-tours`, `MEDIA` →
 `lf-tour-media`) live on the project in the dashboard. The file is still the

@@ -6,17 +6,21 @@
  * Workers runtime -- but it does exercise the handler code, and it runs in a
  * second with no account, no network and no local server.
  *
- * It exists because `wrangler pages dev` currently cannot start here: it walks
- * up and finds a stray wrangler.jsonc in C:\Project Claude, resolves the assets
- * directory to that entire folder, and dies on an unrelated 75MB installer.
- * Pages rejects --config, so there is no way to pin the right one.
+ * It exists because `wrangler pages dev` cannot reach the local D1 on a checkout
+ * whose path contains spaces: wrangler splices its state directory into the
+ * middle of the path, every query lands on an empty database, and --persist-to
+ * does not correct it. See docs/PLATFORM-PLAN.md, "Known environment traps".
+ *
+ * Note what this suite cannot catch, and did not: it runs on Node, where PBKDF2
+ * has no iteration ceiling. The Workers ceiling was only visible on a deployed
+ * preview. Anything touching WebCrypto limits needs testing there too.
  */
 import { DatabaseSync } from 'node:sqlite';
 import { readFileSync } from 'node:fs';
 import { onRequestPost as login } from '../functions/api/auth/login.js';
 import { onRequestPost as logout } from '../functions/api/auth/logout.js';
 import { onRequestGet as me } from '../functions/api/auth/me.js';
-import { hashPassword } from '../functions/_lib/crypto.js';
+import { hashPassword, verifyPassword, MAX_ITERATIONS } from '../functions/_lib/crypto.js';
 
 const sql = new DatabaseSync(':memory:');
 sql.exec(readFileSync(new URL('../migrations/0001_init.sql', import.meta.url), 'utf8'));
@@ -38,9 +42,7 @@ const shim = {
 };
 
 const now = Math.floor(Date.now() / 1000);
-// 100k iterations rather than the production 600k: this suite hashes many
-// times and the cost is the point of the constant, not of the test.
-const H = await hashPassword('hunter2', 100_000);
+const H = await hashPassword('hunter2', MAX_ITERATIONS);
 sql.exec(`INSERT INTO tenants VALUES ('t1','Preferred Shore','preferred-shore','active',${now})`);
 sql.prepare(`INSERT INTO users VALUES ('u1','t1','Agent@Example.com','Test Agent','agent','active',?,NULL)`).run(now);
 sql.prepare(`INSERT INTO credentials VALUES ('c1','u1','password',?,NULL,NULL,?)`).run(H, now);
@@ -104,6 +106,33 @@ r = await call(logout, {}, c2);
 P('logout -> 200 and clears cookie',
   r.status === 200 && /Max-Age=0/.test(r.headers.get('set-cookie')));
 P('cookie dead after logout', (await call(me, null, c2)).status === 401);
+
+/* Regression guards for the ceiling that cost an afternoon.
+ *
+ * Cloudflare Workers refuses PBKDF2 above 100k iterations -- deriveBits throws.
+ * verifyPassword used to catch everything and return false, so a hash written at
+ * the recommended 600k made every account on the service unloggable-into while
+ * reporting "invalid credentials" and leaving the logs clean. Node happily does
+ * 600k, so it only appeared on a deployed preview. */
+let threw = false;
+try { await hashPassword('x', MAX_ITERATIONS + 1); } catch { threw = true; }
+P('hashPassword refuses to exceed the Workers ceiling', threw);
+P('MAX_ITERATIONS is the measured platform ceiling', MAX_ITERATIONS === 100_000);
+
+// Unusable *stored credentials* fail closed -- one account affected, and saying
+// more would leak whether the account exists.
+P('malformed hash fails closed', (await verifyPassword('x', 'nonsense')) === false);
+P('null hash fails closed', (await verifyPassword('x', null)) === false);
+P('wrong scheme fails closed', (await verifyPassword('x', 'bcrypt$2b$12$aa$bb')) === false);
+P('non-numeric cost fails closed', (await verifyPassword('x', 'pbkdf2$sha256$abc$AAAA$AAAA')) === false);
+P('corrupt base64 salt fails closed', (await verifyPassword('x', 'pbkdf2$sha256$1000$!!!!$AAAA')) === false);
+
+// The other branch -- a failure of the crypto engine -- must throw instead, and
+// cannot be exercised here: Node has no PBKDF2 ceiling, so the 600k call that
+// throws on Workers simply returns a non-matching hash. Only a deployed preview
+// catches that, which is the whole lesson from this one.
+P('high cost verifies (no ceiling on Node) rather than throwing',
+  (await verifyPassword('x', 'pbkdf2$sha256$600000$AAAAAAAAAAAAAAAAAAAAAA==$AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=')) === false);
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
