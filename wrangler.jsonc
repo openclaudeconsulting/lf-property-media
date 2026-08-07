@@ -19,12 +19,16 @@
       "database_name": "lf-tours",
       "database_id": "5c2d1f69-2cac-470f-bb4c-e455ad71a918"
     }
-  ]
+  ],
 
-  // R2 binding goes here once R2 is enabled on the account. `wrangler r2 bucket
-  // create lf-tour-media` currently fails with code 10042, "Please enable R2
-  // through the Cloudflare Dashboard" -- it has to be switched on by hand first.
-  // Panoramas stay in git until then, which does not scale past a few properties.
-  //
-  // "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "lf-tour-media" }]
+  // Panorama and floor-plan storage. Egress is free at any volume, which is the
+  // whole reason for R2 here: every buyer who opens a tour pulls ~77 MB.
+  // Same caveat as D1 -- the Pages git deployment needs this binding added to the
+  // project in the dashboard as well, binding name MEDIA.
+  "r2_buckets": [
+    {
+      "binding": "MEDIA",
+      "bucket_name": "lf-tour-media"
+    }
+  ]
 }

@@ -141,6 +141,30 @@ Ordered by dependency. Phase 0 gates everything.
 5. **Processing box**: owner's desktop indefinitely, or rented hardware, and at
    what job volume does that flip?
 
+## 5a. Known environment traps
+
+**`wrangler pages dev` cannot reach the local D1 on this machine.** It splices
+its state directory into the middle of a path containing spaces — the checkout
+lives under `C:\Project Claude\LF Propery Media\…`, and wrangler resolves module
+and persistence paths to `C:\Project Claude\.wrangler\LF Propery Media\…`. The
+server starts and routing works, but every D1 query hits an empty database and
+returns `no such table: users`. `--persist-to` does not correct it, and
+`pages dev` has no `--remote`.
+
+Consequences:
+
+- Handler logic is covered by `tools/test-auth.mjs`, which drives the real route
+  code against SQLite through a D1-shaped shim. 16 checks.
+- The D1 **binding** — the integration point between the Workers runtime and the
+  database — is therefore only provable on a deployed preview, not locally.
+- Anyone picking this up on a path without spaces should try `pages dev` again
+  first; it is likely to just work, and it is the fastest way to close that gap.
+
+**Bindings are not in this repo.** A Pages *git* deployment ignores
+`wrangler.jsonc`; production bindings (`DB` → `lf-tours`, `MEDIA` →
+`lf-tour-media`) live on the project in the dashboard. The file is still the
+source of truth for local dev and for `wrangler d1 execute`.
+
 ## 6. Notes for whoever builds this
 
 - Do not put the pipeline behind a Worker. It will not fit. See section 3.
