@@ -1,3 +1,14 @@
+# Source and internal docs are NOT visitor material. Cloudflare Pages deploys the
+# whole repo root, and .assetsignore is a Workers Assets feature that a Pages git
+# deployment ignores entirely -- so until 2026-08-07 every one of these answered
+# 200 on the live site. Blocked here because this is the only mechanism that
+# applies to a Pages git build without touching the dashboard.
+/docs/*         /404.html       404
+/tools/*        /404.html       404
+/CLAUDE.md      /404.html       404
+/README.md      /404.html       404
+/wrangler.jsonc /404.html       404
+
 /home           /index.html     301
 /book           /contact.html   301
 /book-now       /contact.html   301
