@@ -9,13 +9,19 @@ README.md
 *.stl
 Dallas*.stl
 
-# Build scripts and internal tuning harnesses. robots.txt already disallows
-# /tools/, but that only asks crawlers nicely — this keeps them off the deploy.
+# WARNING: this file does NOTHING for the live site.
+#
+# .assetsignore is a Workers Assets feature. This project deploys through the
+# Cloudflare Pages *git* integration, which ignores it entirely and publishes the
+# whole repo root. Verified 2026-08-07: every path listed below answered 200.
+#
+# What actually keeps things off the live site:
+#   - .gitignore      for client media (works: job folders are not in the repo)
+#   - functions/      for source and internal docs (a Pages Function takes
+#                     precedence over a static asset; _redirects does not)
+#
+# Kept only in case this project is ever moved to a Workers Assets deployment.
 tools/
-
-# Internal documentation. These are written for the owner, not for visitors:
-# vendors, process, what is outsourced, platform plans. docs/AUTOMATION.md was
-# being served publicly at /docs/AUTOMATION.md until 2026-08-07.
 docs/
 
 # LF client job folders — never publish these to the live site
