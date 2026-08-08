@@ -96,6 +96,7 @@
   .msg[hidden]{display:none;}
   .msg[data-kind="err"]{background:#fdf0ec; border:1px solid #e3b4a6; color:#8a3520;}
   .msg[data-kind="ok"]{background:#eef4ec; border:1px solid #b9d1b2; color:#33612a;}
+  .msg[data-kind="warn"]{background:#fdf6e8; border:1px solid #e3cf9e; color:#7a5a1c;}
   @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
 </style>
 </head>
@@ -125,7 +126,7 @@
        brackets, or already-stitched equirectangular JPEGs. Large files are fine —
        they upload in pieces, so a dropped connection only costs one piece.</p>
   </div>
-  <input type="file" id="picker" multiple accept=".dng,.insp,.jpg,.jpeg,.tif,.tiff,.png" />
+  <input type="file" id="picker" multiple />
 
   <ul class="files" id="files"></ul>
 
@@ -135,6 +136,7 @@
     <span class="summary" id="summary"></span>
   </div>
 
+  <div class="msg" id="warn" data-kind="warn" hidden role="status"></div>
   <div class="msg" id="msg" hidden role="status"></div>
 </main>
 
@@ -151,6 +153,9 @@ const LANES = 2;
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) =>
   ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+/* What pano_hdr can actually open. Anything else is allowed through with a
+   warning rather than refused -- see summarise(). */
+const READABLE = /\.(dng|insp|jpe?g|tiff?|png)$/i;
 const mb = (n) => n >= 1e9 ? `${(n / 1e9).toFixed(1)} GB` : `${Math.round(n / 1e6)} MB`;
 
 const queue = [];            // {file, row, bar, state, status}
@@ -165,11 +170,28 @@ function say(kind, text) {
 function summarise() {
   const done = queue.filter((q) => q.status === 'done').length;
   const bytes = queue.reduce((t, q) => t + q.file.size, 0);
+  const odd = queue.filter((q) => !READABLE.test(q.file.name)).length;
+
   $('summary').textContent = queue.length
     ? `${queue.length} file${queue.length === 1 ? '' : 's'} · ${mb(bytes)}${done ? ` · ${done} sent` : ''}`
     : '';
-  $('submit').disabled = busy || done === 0;
+
+  // Enabled as soon as there is anything to send. It used to test `done === 0`,
+  // which meant the button that starts the upload required an upload to have
+  // already happened -- it could never enable at all.
+  $('submit').disabled = busy || queue.length === 0;
   $('clear').disabled = busy || queue.length === 0;
+
+  // A warning, not a block. The pipeline reads jpg/tif/png/insp/dng; anything
+  // else will upload fine and fail hours later during processing, so it is worth
+  // saying now -- but a reference shot or a floor plan is a legitimate thing to
+  // send, and refusing it outright would be wrong.
+  $('warn').hidden = odd === 0;
+  if (odd) {
+    $('warn').textContent = `${odd} file${odd === 1 ? " isn't" : "s aren't"} a format the `
+      + 'processing pipeline reads (it takes .dng, .insp, .jpg, .tif and .png). '
+      + "They'll still upload — iPhone HEIC in particular needs converting first.";
+  }
 }
 
 function addFiles(list) {
