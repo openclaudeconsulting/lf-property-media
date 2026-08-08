@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex, nofollow" />
+<title>Send us your shoot — LF Property Media</title>
+
+<link rel="icon" href="/images/favicon.svg" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+
+<style>
+  :root{
+    --lf-paper:#faf8f5; --lf-white:#fff; --lf-cream:#f3ede2;
+    --lf-ink:#1a1a1a; --lf-muted:#6b6b6b;
+    --lf-sand:#b08968; --lf-sand-dark:#8c6a4e; --lf-sand-light:#d4b896;
+    --lf-sand-soft:#ede2d1; --lf-border:#e8e2d5;
+    --ok:#4a7c3f; --bad:#a8412a;
+    --font-display:"Playfair Display",Georgia,serif;
+    --font-body:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+    --lift-1:0 1px 2px rgba(38,26,16,.10), 0 2px 8px rgba(38,26,16,.06);
+    --ease-out:cubic-bezier(.22,.68,.36,1);
+    --ease-spring:cubic-bezier(.34,1.42,.48,1);
+    --s1:.375rem; --s2:.625rem; --s3:1rem; --s4:1.5rem; --s5:2.25rem;
+  }
+  *,*::before,*::after{box-sizing:border-box;}
+  body{margin:0; font-family:var(--font-body); color:var(--lf-ink); background:var(--lf-paper);
+       -webkit-font-smoothing:antialiased; min-height:100vh;}
+  .top{display:flex; align-items:center; gap:var(--s3); padding:var(--s3) var(--s4);
+       background:var(--lf-white); border-bottom:1px solid var(--lf-border);}
+  .mark{font-family:var(--font-display); font-size:1.375rem; letter-spacing:-.02em;
+        color:var(--lf-ink); text-decoration:none;}
+  .mark i{color:var(--lf-sand); font-style:italic;}
+  .spacer{margin-left:auto;}
+  a.back{font-size:.75rem; color:var(--lf-sand-dark); text-decoration:none;}
+  a.back:hover{text-decoration:underline;}
+
+  main{max-width:760px; margin:0 auto; padding:var(--s5) var(--s4) 4rem;}
+  h1{font-family:var(--font-display); font-weight:400; font-size:2rem; letter-spacing:-.025em; margin:0 0 .25rem;}
+  h1 i{color:var(--lf-sand); font-style:italic;}
+  .lede{margin:0 0 var(--s5); color:var(--lf-muted); font-size:.9375rem; line-height:1.65;}
+  label{display:block; font-size:.6875rem; letter-spacing:.12em; text-transform:uppercase;
+        color:var(--lf-muted); margin-bottom:.4rem; font-weight:600;}
+  input[type=text]{
+    width:100%; font:inherit; font-size:.9375rem; padding:.6875rem .75rem; margin-bottom:var(--s4);
+    border:1px solid var(--lf-border); border-radius:3px; background:var(--lf-white);
+    transition:border-color .18s var(--ease-out), box-shadow .18s var(--ease-out);
+  }
+  input[type=text]:focus{outline:none; border-color:var(--lf-sand);
+                         box-shadow:0 0 0 3px rgba(176,137,104,.16);}
+
+  .drop{
+    border:1.5px dashed var(--lf-border); border-radius:5px; background:var(--lf-white);
+    padding:var(--s5) var(--s4); text-align:center; cursor:pointer;
+    transition:border-color .2s var(--ease-out), background-color .2s var(--ease-out),
+               transform .2s var(--ease-spring);
+  }
+  .drop:hover{border-color:var(--lf-sand-light); background:var(--lf-cream);}
+  .drop[data-over="true"]{border-color:var(--lf-sand); background:var(--lf-sand-soft); transform:scale(1.01);}
+  .drop h2{font-family:var(--font-display); font-weight:400; font-size:1.25rem; margin:0 0 var(--s2);}
+  .drop p{margin:0 auto; max-width:46ch; font-size:.8125rem; line-height:1.7; color:var(--lf-muted);}
+  .drop svg{width:34px; height:34px; stroke:var(--lf-sand); fill:none; stroke-width:1.4;
+            stroke-linecap:round; stroke-linejoin:round; margin-bottom:var(--s2);}
+  input[type=file]{display:none;}
+
+  .files{list-style:none; margin:var(--s4) 0 0; padding:0; display:flex; flex-direction:column; gap:var(--s1);}
+  .file{
+    display:grid; grid-template-columns:1fr auto; gap:.2rem var(--s3); align-items:center;
+    padding:.625rem .75rem; background:var(--lf-white); border:1px solid var(--lf-border);
+    border-radius:3px; font-size:.8125rem;
+  }
+  .file__name{overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .file__state{font-size:.6875rem; color:var(--lf-muted); font-variant-numeric:tabular-nums;}
+  .file__state[data-s="done"]{color:var(--ok);}
+  .file__state[data-s="error"]{color:var(--bad);}
+  .bar{grid-column:1 / -1; height:2px; background:var(--lf-cream); border-radius:2px; overflow:hidden;}
+  .bar i{display:block; height:100%; width:0; background:var(--lf-sand);
+         transition:width .2s var(--ease-out);}
+
+  .actions{display:flex; gap:var(--s2); align-items:center; margin-top:var(--s4); flex-wrap:wrap;}
+  button{
+    font:inherit; font-size:.75rem; font-weight:600; letter-spacing:.12em; text-transform:uppercase;
+    padding:.75rem 1.25rem; border-radius:3px; cursor:pointer;
+    color:var(--lf-paper); background:var(--lf-ink); border:1px solid var(--lf-ink);
+    transition:background-color .2s var(--ease-out), transform .2s var(--ease-spring);
+  }
+  button.ghost{background:transparent; color:var(--lf-ink); border-color:var(--lf-border);}
+  button:hover:not([disabled]){background:var(--lf-sand-dark); border-color:var(--lf-sand-dark); color:var(--lf-paper);}
+  button:focus-visible{outline:2px solid var(--lf-sand); outline-offset:2px;}
+  button:active:not([disabled]){transform:translateY(1px) scale(.99);}
+  button[disabled]{opacity:.45; cursor:default;}
+  .summary{font-size:.8125rem; color:var(--lf-muted);}
+  .msg{margin-top:var(--s3); padding:var(--s3); border-radius:3px; font-size:.875rem; line-height:1.6;}
+  .msg[hidden]{display:none;}
+  .msg[data-kind="err"]{background:#fdf0ec; border:1px solid #e3b4a6; color:#8a3520;}
+  .msg[data-kind="ok"]{background:#eef4ec; border:1px solid #b9d1b2; color:#33612a;}
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <a class="mark" href="/">LF<i>.</i></a>
+  <div class="spacer"></div>
+  <a class="back" href="/app/">&larr; Back to listings</a>
+</header>
+
+<main>
+  <h1>Send us your <i>shoot</i></h1>
+  <p class="lede">Drop the raw brackets straight off the camera — every exposure,
+     unedited. We handle the fusing, grading and tour build from there.</p>
+
+  <label for="address">Property address</label>
+  <input type="text" id="address" placeholder="2719 Fort Worth Street, Sarasota FL" autocomplete="off" />
+
+  <div class="drop" id="drop" role="button" tabindex="0"
+       aria-label="Choose files or drop them here">
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v13"/>
+    </svg>
+    <h2>Drop your files here</h2>
+    <p>Or click to choose them. Raw <strong>.dng</strong> and <strong>.insp</strong>
+       brackets, or already-stitched equirectangular JPEGs. Large files are fine —
+       they upload in pieces, so a dropped connection only costs one piece.</p>
+  </div>
+  <input type="file" id="picker" multiple accept=".dng,.insp,.jpg,.jpeg,.tif,.tiff,.png" />
+
+  <ul class="files" id="files"></ul>
+
+  <div class="actions">
+    <button id="submit" disabled>Send to LF</button>
+    <button class="ghost" id="clear" disabled>Clear</button>
+    <span class="summary" id="summary"></span>
+  </div>
+
+  <div class="msg" id="msg" hidden role="status"></div>
+</main>
+
+<script type="module">
+/* 25 MB slices. R2 requires every part but the last to be at least 5 MB, and a
+   Worker cannot buffer a whole 110 MB bracket frame, so the file is cut here and
+   reassembled by R2 on complete. A dropped connection costs one slice, not the
+   file -- which matters when a shoot is 200 frames over hotel wifi. */
+const CHUNK = 25 * 1024 * 1024;
+// Two files at a time. More saturates a phone tether and makes every file slow
+// instead of finishing some; one wastes a fast connection.
+const LANES = 2;
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) =>
+  ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+const mb = (n) => n >= 1e9 ? `${(n / 1e9).toFixed(1)} GB` : `${Math.round(n / 1e6)} MB`;
+
+const queue = [];            // {file, row, bar, state, status}
+let jobId = null;
+let busy = false;
+
+function say(kind, text) {
+  const m = $('msg');
+  m.hidden = false; m.dataset.kind = kind; m.textContent = text;
+}
+
+function summarise() {
+  const done = queue.filter((q) => q.status === 'done').length;
+  const bytes = queue.reduce((t, q) => t + q.file.size, 0);
+  $('summary').textContent = queue.length
+    ? `${queue.length} file${queue.length === 1 ? '' : 's'} · ${mb(bytes)}${done ? ` · ${done} sent` : ''}`
+    : '';
+  $('submit').disabled = busy || done === 0;
+  $('clear').disabled = busy || queue.length === 0;
+}
+
+function addFiles(list) {
+  for (const file of list) {
+    if (queue.some((q) => q.file.name === file.name && q.file.size === file.size)) continue;
+    const li = document.createElement('li');
+    li.className = 'file';
+    li.innerHTML = `<span class="file__name">${esc(file.name)}</span>
+                    <span class="file__state">${mb(file.size)}</span>
+                    <span class="bar"><i></i></span>`;
+    $('files').append(li);
+    queue.push({ file, row: li, bar: li.querySelector('.bar i'),
+                 state: li.querySelector('.file__state'), status: 'waiting' });
+  }
+  summarise();
+}
+
+/* --- drop zone ----------------------------------------------------------- */
+const drop = $('drop');
+drop.addEventListener('click', () => $('picker').click());
+drop.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('picker').click(); }
+});
+$('picker').addEventListener('change', (e) => addFiles(e.target.files));
+for (const ev of ['dragenter', 'dragover']) {
+  drop.addEventListener(ev, (e) => { e.preventDefault(); drop.dataset.over = 'true'; });
+}
+for (const ev of ['dragleave', 'drop']) {
+  drop.addEventListener(ev, (e) => { e.preventDefault(); drop.dataset.over = 'false'; });
+}
+drop.addEventListener('drop', (e) => { if (e.dataTransfer?.files?.length) addFiles(e.dataTransfer.files); });
+// Dropping on the page outside the zone would otherwise navigate away from a
+// half-finished upload, which is a spectacular way to lose an hour of work.
+addEventListener('dragover', (e) => e.preventDefault());
+addEventListener('drop', (e) => e.preventDefault());
+
+/* --- api ----------------------------------------------------------------- */
+async function api(path, opts = {}) {
+  const res = await fetch(path, opts);
+  if (res.status === 401) {
+    location.assign(`/app/login/?next=${encodeURIComponent(location.pathname)}`);
+    throw new Error('unauthenticated');
+  }
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+  return data;
+}
+const post = (path, body) => api(path, {
+  method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body),
+});
+
+async function sendOne(item) {
+  const { file } = item;
+  item.status = 'sending';
+  const { fileId } = await post('/api/upload',
+    { action: 'start', job: jobId, filename: file.name, size: file.size });
+
+  const parts = [];
+  const total = Math.max(Math.ceil(file.size / CHUNK), 1);
+  for (let n = 1; n <= total; n++) {
+    const slice = file.slice((n - 1) * CHUNK, n * CHUNK);
+    const res = await fetch(`/api/upload?file=${encodeURIComponent(fileId)}&part=${n}`,
+      { method: 'PUT', body: slice });
+    if (!res.ok) throw new Error(`part ${n} failed (HTTP ${res.status})`);
+    parts.push(await res.json());
+    const pct = Math.round((n / total) * 100);
+    item.bar.style.width = `${pct}%`;
+    item.state.textContent = `${pct}%`;
+  }
+
+  await post('/api/upload', { action: 'complete', file: fileId, parts });
+  item.status = 'done';
+  item.state.dataset.s = 'done';
+  item.state.textContent = 'Sent';
+  item.bar.style.width = '100%';
+}
+
+async function run() {
+  busy = true; summarise();
+  $('submit').textContent = 'Sending…';
+
+  if (!jobId) {
+    const { job } = await post('/api/jobs', { address: $('address').value });
+    jobId = job.id;
+  }
+
+  const pending = queue.filter((q) => q.status !== 'done');
+  let cursor = 0;
+  const lane = async () => {
+    while (cursor < pending.length) {
+      const item = pending[cursor++];
+      try {
+        await sendOne(item);
+      } catch (e) {
+        if (e.message === 'unauthenticated') throw e;
+        item.status = 'error';
+        item.state.dataset.s = 'error';
+        item.state.textContent = 'Failed';
+        item.error = e.message;
+      }
+      summarise();
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(LANES, pending.length) }, lane));
+
+  const failed = queue.filter((q) => q.status === 'error');
+  const sent = queue.filter((q) => q.status === 'done').length;
+  busy = false;
+
+  if (!sent) {
+    $('submit').textContent = 'Send to LF';
+    summarise();
+    return say('err', 'Nothing uploaded. Check your connection and try again — files already sent are not re-sent.');
+  }
+
+  // Submitting is separate from uploading so a partial failure does not queue a
+  // job the runner can only choke on. Failed files are retried by pressing send
+  // again; the button only finalises once everything has landed.
+  if (failed.length) {
+    $('submit').textContent = 'Retry failed files';
+    summarise();
+    return say('err', `${sent} sent, ${failed.length} failed. Press retry — the ones already sent are skipped.`);
+  }
+
+  await api(`/api/jobs/${encodeURIComponent(jobId)}`, {
+    method: 'PATCH', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ action: 'submit' }),
+  });
+  $('submit').textContent = 'Sent';
+  $('submit').disabled = true;
+  $('clear').disabled = true;
+  say('ok', `${sent} file${sent === 1 ? '' : 's'} received. We'll process the brackets and the tour will appear in your listings when it's ready.`);
+}
+
+$('submit').addEventListener('click', () => {
+  $('msg').hidden = true;
+  run().catch((e) => {
+    if (e.message === 'unauthenticated') return;
+    busy = false;
+    $('submit').textContent = 'Send to LF';
+    summarise();
+    say('err', `Upload failed: ${e.message}`);
+  });
+});
+
+$('clear').addEventListener('click', () => {
+  queue.length = 0; jobId = null;
+  $('files').innerHTML = ''; $('msg').hidden = true;
+  $('submit').textContent = 'Send to LF';
+  summarise();
+});
+
+// A refresh mid-upload abandons multipart uploads that nothing will finish.
+addEventListener('beforeunload', (e) => { if (busy) { e.preventDefault(); e.returnValue = ''; } });
+
+summarise();
+</script>
+</body>
+</html>

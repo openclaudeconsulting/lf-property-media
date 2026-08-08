@@ -66,7 +66,19 @@
   h1{font-family:var(--font-display); font-weight:400; font-size:2rem;
      letter-spacing:-.025em; margin:0 0 .25rem;}
   h1 i{color:var(--lf-sand); font-style:italic;}
-  .lede{margin:0 0 var(--s5); color:var(--lf-muted); font-size:.9375rem; line-height:1.65;}
+  .lede{margin:0; color:var(--lf-muted); font-size:.9375rem; line-height:1.65;}
+  .head{display:flex; align-items:flex-start; gap:var(--s3); flex-wrap:wrap; margin-bottom:var(--s5);}
+  .head > div{flex:1; min-width:16rem;}
+  .btn--go{background:var(--lf-ink); border-color:var(--lf-ink); color:var(--lf-paper); font-weight:600;
+           letter-spacing:.1em; text-transform:uppercase; padding:.7rem 1.1rem;}
+  .btn--go:hover{background:var(--lf-sand-dark); border-color:var(--lf-sand-dark); color:var(--lf-paper);}
+  .sec{font-size:.6875rem; letter-spacing:.15em; text-transform:uppercase; color:var(--lf-muted);
+       font-weight:600; margin:var(--s5) 0 var(--s3);}
+  .sec:first-of-type{margin-top:0;}
+  .status[data-s="draft"],.status[data-s="queued"]{background:var(--lf-sand-soft); color:var(--lf-sand-dark);}
+  .status[data-s="processing"]{background:#e6eef5; color:#2f5a7d;}
+  .status[data-s="ready"]{background:#e7f0e4; color:#3d6b33;}
+  .status[data-s="failed"]{background:#fdf0ec; color:#8a3520;}
 
   .grid{display:grid; gap:var(--s3); grid-template-columns:repeat(auto-fill,minmax(280px,1fr));}
   .card{
@@ -116,10 +128,22 @@
 </header>
 
 <main>
-  <h1>Your <i>listings</i></h1>
-  <p class="lede">Every property you've had shot, and the virtual tour attached to it.</p>
+  <div class="head">
+    <div>
+      <h1>Your <i>listings</i></h1>
+      <p class="lede">Every property you've had shot, and the virtual tour attached to it.</p>
+    </div>
+    <a class="btn btn--go" href="/app/upload/">Send us a shoot</a>
+  </div>
 
   <p class="err" id="err" hidden role="alert"></p>
+
+  <section id="jobsSection" hidden>
+    <h2 class="sec">In progress</h2>
+    <div class="grid" id="jobs"></div>
+  </section>
+
+  <h2 class="sec" id="toursHead" hidden>Published</h2>
   <div class="grid" id="grid">
     <div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>
   </div>
@@ -152,17 +176,42 @@ $('signout').addEventListener('click', async () => {
 
 const fmt = (n) => Number(n).toLocaleString();
 
+const WORDING = {
+  draft: 'Not sent yet', queued: 'Waiting to be processed',
+  processing: 'Being processed', ready: 'Ready to review',
+  published: 'Live', failed: 'Something went wrong',
+};
+
+function renderJobs(jobs) {
+  // A published job is represented by its tour below; showing it twice would
+  // make one property look like two.
+  const open = jobs.filter((j) => j.status !== 'published');
+  if (!open.length) return;
+  $('jobsSection').hidden = false;
+  $('jobs').innerHTML = open.map((j) => `
+    <article class="card">
+      <span class="status" data-s="${esc(j.status)}">${esc(WORDING[j.status] ?? j.status)}</span>
+      <h3>${esc(j.address || 'Untitled shoot')}</h3>
+      <div class="facts">
+        <span>${esc(j.raw_files)} file${j.raw_files === 1 ? '' : 's'}</span>
+        ${j.raw_bytes ? `<span>${Math.round(j.raw_bytes / 1e9 * 10) / 10} GB</span>` : ''}
+      </div>
+      ${j.status === 'failed' && j.error ? `<div class="meta">${esc(j.error)}</div>` : ''}
+      ${j.status === 'draft' ? '<a class="btn" href="/app/upload/">Finish sending</a>' : ''}
+    </article>`).join('');
+}
+
 function renderTours(tours) {
   if (!tours.length) {
     $('grid').outerHTML = `
       <div class="empty">
-        <h2>Nothing here yet</h2>
-        <p>Once a shoot is processed it shows up here, with its tour ready to
-           check over before it goes out. Tours already published elsewhere are
-           being moved across.</p>
+        <h2>No published tours yet</h2>
+        <p>Send us a shoot and the finished tour lands here, ready to check over
+           before the link goes on the listing.</p>
       </div>`;
     return;
   }
+  $('toursHead').hidden = false;
   $('grid').innerHTML = tours.map((t) => `
     <article class="card">
       <span class="status" data-s="${esc(t.status)}">${esc(t.status)}</span>
@@ -184,8 +233,11 @@ try {
   $('tenant').textContent = user.tenant_name || '';
   if (user.role === 'owner') { $('role').hidden = false; $('role').textContent = 'Owner'; }
 
-  const { tours } = await api('/api/tours');
-  renderTours(tours);
+  // Both at once: a slow tours query should not hold up the in-progress list,
+  // which is the part someone reloads this page to watch.
+  const [jobs, tours] = await Promise.all([api('/api/jobs'), api('/api/tours')]);
+  renderJobs(jobs.jobs);
+  renderTours(tours.tours);
 } catch (e) {
   if (e.message !== 'unauthenticated') {
     $('grid').innerHTML = '';
