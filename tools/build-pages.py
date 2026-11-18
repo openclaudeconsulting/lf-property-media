@@ -558,7 +558,7 @@ SERVICE_PAGES = [
     {
         "slug": "3d-tours",
         "title": "3D Virtual Tours & Floor Plans in Sarasota, FL | LF Property Media",
-        "description": "Interactive 3D virtual tours and 2D/3D floor plans for Sarasota real estate listings. Dollhouse views, walkthrough navigation. Included in Platinum, 50% off with Premier.",
+        "description": "Interactive 3D virtual tours and 2D/3D floor plans for Sarasota real estate listings. Dollhouse views, walkthrough navigation. 50% off with Premier or Platinum.",
         "keywords": "3D virtual tour Sarasota, Matterport Sarasota, real estate virtual tour Florida, 3D floor plan Sarasota, dollhouse floor plan real estate",
         "h1": "3D Virtual Tours & Floor Plans",
         "lede": "Interactive walkthroughs that let buyers explore the home from their couch. Combined with 2D and 3D dollhouse floor plans for the full spatial picture.",
