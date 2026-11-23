@@ -104,6 +104,14 @@ Italic accents on key emotional words are a signature move (e.g., "Visuals that 
 - **Void elements:** self-closing slash (`<meta ... />`, `<link ... />`).
 - **Prefer CSS tokens** — new components should use existing `--lf-*` variables and the `.section.block` / `.container` / `.grid` patterns rather than one-off styles.
 
+## Journal (blog)
+
+- Live at `/blog/` ("Journal" in the nav and footer). Posts are **educational or local** (how-tos, service explainers, area/lifestyle pieces), never plain property showcases.
+- Source: `content/blog/<slug>.md` (front matter documented at the top of `tools/build-blog.py`). Blocked from the live site by `functions/content/_middleware.js`.
+- After adding or editing a post, run `python3 tools/build-blog.py`. It writes `blog/index.html`, `blog/<slug>.html` and the journal block in `sitemap.xml`. Don't hand-edit the generated HTML.
+- Images come from `images/` (owner's real work only). No discounts or limited-time offers in posts.
+- The owner approves every post before it is merged. Drafts arrive weekly from a scheduled task, but nothing is published automatically.
+
 ## Things NOT to do without asking
 
 - Don't add a JavaScript framework. This site doesn't need React/Vue/Svelte.
