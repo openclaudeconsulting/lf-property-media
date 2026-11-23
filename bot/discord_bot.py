@@ -350,7 +350,7 @@ def handle_delivery(p: dict) -> str:
         "Let me know if you need anything adjusted.",
         "",
         "Thank you,",
-        "Locke",
+        "Lochlann",
         "LF Property Media",
         "(941) 387-5399 · lfpropertymedia.org",
     ]

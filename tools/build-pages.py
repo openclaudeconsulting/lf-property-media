@@ -487,7 +487,7 @@ SERVICE_PAGES = [
             },
             {
                 "heading": "FAA Part 107 certified — what that means for you",
-                "body": """<p>Operating drones commercially in the United States requires FAA Part 107 certification. Locke holds this credential, which means we can legally fly for paid real estate shoots, we follow controlled-airspace regulations, and we carry the proper certifications to back it up.</p>
+                "body": """<p>Operating drones commercially in the United States requires FAA Part 107 certification. Lochlann holds this credential, which means we can legally fly for paid real estate shoots, we follow controlled-airspace regulations, and we carry the proper certifications to back it up.</p>
 <p style="margin-top:14px;">If your listing is near Sarasota-Bradenton International Airport, Venice Municipal, or other controlled airspace, we file LAANC authorizations in advance so the shoot happens without surprises.</p>"""
             },
             {
@@ -503,7 +503,7 @@ SERVICE_PAGES = [
         ],
         "faq_items": [
             ("Is drone included in every package?", "Yes. Signature includes 6 drone shots, Premier 10, Platinum 16. Extra drone photos are $20 each or $100 for a set of 5."),
-            ("Are you FAA Part 107 certified?", "Yes. Locke is FAA Part 107 certified, which is required to operate drones commercially in the U.S."),
+            ("Are you FAA Part 107 certified?", "Yes. Lochlann is FAA Part 107 certified, which is required to operate drones commercially in the U.S."),
             ("What about controlled airspace?", "If the property is near Sarasota-Bradenton or another controlled airport, we file LAANC authorizations in advance. No surprises on shoot day."),
             ("Can you fly in bad weather?", "Drone flights require winds under ~20 mph and clear visibility. If conditions are bad on shoot day, we'll reschedule the aerials at no charge."),
             ("Do you offer drone video?", "Yes — drone video is included in the Premier and Platinum reels. Standalone drone video is available as a $200 add-on.")
@@ -768,7 +768,7 @@ AREA_PAGES = [
         "keywords": "Nokomis real estate photographer, Nokomis FL photography, Casey Key real estate photographer, Nokomis Beach photography",
         "h1": "Nokomis FL Real Estate Photography",
         "lede": "This is home base. North Casey Key, Nokomis Beach, Mission Valley, Calusa Lakes — we know every back road. If you're listing in Nokomis, we can usually shoot it on a day's notice.",
-        "area_context": """<p>Nokomis is where Locke lives, which means we shoot here more than any other ZIP code outside Sarasota proper. The market is mixed — older Florida-style homes inland, waterfront on North Casey Key and the canals around Mission Valley, gated golf communities like Calusa Lakes. Each requires a different photography approach, and we know all three from regular work.</p>""",
+        "area_context": """<p>Nokomis is where Lochlann lives, which means we shoot here more than any other ZIP code outside Sarasota proper. The market is mixed — older Florida-style homes inland, waterfront on North Casey Key and the canals around Mission Valley, gated golf communities like Calusa Lakes. Each requires a different photography approach, and we know all three from regular work.</p>""",
         "neighborhoods_blurb": """<p>Notable Nokomis areas we shoot regularly: <strong>North Casey Key</strong> (barrier-island Gulf-front), <strong>Nokomis Beach</strong>, <strong>Mission Valley Estates</strong>, <strong>Calusa Lakes</strong>, <strong>Sorrento East</strong>, and <strong>The Inlets at Nokomis</strong>. Older established neighborhoods often have mature oaks that we light around carefully — fresh new construction in Esplanade and the Toscana Isles area is more straightforward.</p>""",
         "faq_items": [
             ("Travel fee for Nokomis?", "Zero — Nokomis is the home base. We can usually shoot here on a day's notice if the schedule allows."),
@@ -1086,7 +1086,7 @@ def areas_hub_page():
     <div class="section-head" style="margin-bottom:0;">
       <span class="kicker">Service Areas</span>
       <h1 style="font-size:clamp(2.4rem,5vw,3.6rem);">Sarasota, Tampa Bay & all of Southwest Florida.</h1>
-      <p class="lede-large" style="margin:24px auto 0;max-width:760px;">Locke is based in Nokomis, FL — between Sarasota and Venice — and travels up to 90 minutes in any direction for shoots. That's an enormous service footprint, from Cape Coral in the south to Clearwater in the north.</p>
+      <p class="lede-large" style="margin:24px auto 0;max-width:760px;">Lochlann is based in Nokomis, FL — between Sarasota and Venice — and travels up to 90 minutes in any direction for shoots. That's an enormous service footprint, from Cape Coral in the south to Clearwater in the north.</p>
       <div class="btn-row" style="justify-content:center;margin-top:32px;">
         <a href="{rel}contact.html" class="btn btn-primary">Get a Quote</a>
         <a href="{rel}packages.html" class="btn btn-secondary">View Packages</a>
