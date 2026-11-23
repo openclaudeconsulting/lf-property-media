@@ -43,7 +43,7 @@ def shared_head(title, description, canonical, og_image="https://lfpropertymedia
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="{rel_root}css/styles.css?v=2" />
+<link rel="stylesheet" href="{rel_root}css/styles.css?v=4" />
 <link rel="icon" type="image/svg+xml" href="{rel_root}images/favicon.svg" />
 <meta property="og:site_name" content="LF Property Media" />
 <meta property="og:type" content="website" />
@@ -93,6 +93,7 @@ def shared_header(rel_root="../"):
         <li><a href="{rel_root}gallery.html">Gallery</a></li>
         <li><a href="{rel_root}about.html">About</a></li>
         <li><a href="{rel_root}faq.html">FAQ</a></li>
+        <li><a href="{rel_root}blog/index.html">Journal</a></li>
         <li><a class="nav-cta" href="{rel_root}contact.html">Book Now</a></li>
       </ul>
     </nav>
@@ -121,6 +122,7 @@ def shared_footer(rel_root="../"):
           <li><a href="{rel_root}gallery.html">Gallery</a></li>
           <li><a href="{rel_root}about.html">About</a></li>
           <li><a href="{rel_root}faq.html">FAQ</a></li>
+          <li><a href="{rel_root}blog/index.html">Journal</a></li>
         </ul>
       </div>
       <div>
